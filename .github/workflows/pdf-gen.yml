@@ -26,7 +26,7 @@ jobs:
       - name: Generate PDF page
         run: |
           mkdir pdfs
-          cp spec.pdf pdfs/
+          cp design.pdf pdfs/
           cat > pdfs/index.html <<EOL
           <!doctype html>
           <html>
