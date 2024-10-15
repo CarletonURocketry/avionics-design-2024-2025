@@ -22,11 +22,11 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: CUInSpace Avionics Systems Design 2024-2025
-          path: design.pdf
+          path: "CUInSpace Avionics Systems 2024 2025.pdf"
       - name: Generate PDF page
         run: |
           mkdir pdfs
-          cp design.pdf pdfs/
+          cp "CUInSpace Avionics Systems 2024 2025.pdf" pdfs/
           cat > pdfs/index.html <<EOL
           <!doctype html>
           <html>
