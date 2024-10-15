@@ -21,6 +21,8 @@ If you'd like to download the pre-compiled PDF for the design documents, you can
 To generate the specification PDF, run `make all` within the project directory. You must have LaTeX tooling installed
 (specifically `latexmk`).
 
+Building On Windows: Assuming you have LaTeX (specifically `latexmk`) installed you can build the PDF with `latexmk`. To clean up auto-generated temporary files run `latexmk -c`.
+
 <!--Links-->
 
 [pdf]: https://github.com/CarletonURocketry/avionics-design-2024-2025/blob/gh-pages/design.pdf
