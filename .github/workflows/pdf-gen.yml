@@ -18,7 +18,6 @@ jobs:
         with:
           work_in_root_file_dir: true
           root_file: design.tex
-          args: -norc
       - name: Upload documents
         uses: actions/upload-artifact@v3
         with:
