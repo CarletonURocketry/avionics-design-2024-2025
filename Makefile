@@ -1,8 +1,10 @@
 # LaTeX Compiler
 LC = pdflatex
+LCFLAGS = -quiet
 
 # Glossary Compiler
 GC = makeglossaries
+GCFLAGS = -q
 
 TITLE = CUInSpace Avionics Systems 2024 2025
 OUT = $(TITLE).pdf
@@ -14,9 +16,9 @@ all: $(OUT)
 rebuild: clean all
 
 $(OUT):
-	@$(LC) -jobname="$(TITLE)" $(MAIN)
-	@$(GC) "$(TITLE)"
-	@$(LC) -jobname="$(TITLE)" $(MAIN)
+	@$(LC) $(LCFLAGS) -jobname="$(TITLE)" $(MAIN)
+	@$(GC) $(GCLFAGS) "$(TITLE)"
+	@$(LC) $(LCFLAGS) -jobname="$(TITLE)" $(MAIN)
 
 clean:
 	@rm "$(TITLE)".*
