@@ -19,7 +19,10 @@ If you'd like to download the pre-compiled PDF for the design documents, you can
 ## Building
 
 To generate the specification PDF, run `make all` within the project directory. You must have LaTeX tooling installed
-(specifically `latexmk`).
+(specifically `pdflatex`).
+
+On Windows, this will work if you run `pdflatex design.tex`, then `makeglossaries design` and finally `pdflatex
+design.tex`.
 
 Building On Windows: Assuming you have LaTeX (specifically `latexmk`) installed you can build the PDF with `latexmk`. To clean up auto-generated temporary files run `latexmk -c`.
 

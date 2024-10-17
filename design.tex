@@ -2,7 +2,7 @@
 \usepackage[letterpaper, margin=1in]{geometry}
 
 \usepackage[acronym]{glossaries}
-\usepackage[automake]{glossaries-extra}
+\usepackage[nomain,acronym,automake=immediate]{glossaries-extra}
 
 \usepackage[style=ieee]{biblatex}
 \addbibresource{./references.bib}
@@ -42,7 +42,7 @@
 }
 
 % GLOSSARY %
-\input{./sections/glossary.tex}
+\input{sections/glossary.tex}
 \makeglossaries
 
 % MAIN DOCUMENT %
@@ -62,15 +62,16 @@
 \pagebreak
 
 % OVERVIEW %
-\input{./sections/introduction.tex}
+\input{sections/introduction.tex}
 
 % PREVIOUS SYSTEM DESCRIPTION %
 \input{sections/previous_systems.tex}
 
+
 % GLOSSARY %
 \pagebreak
-\printglossary[title=Glossary]
-\printglossary[type=\acronymtype,title=Acronyms]
+\printglossary[title={Glossary}]
+\printglossary[type=\acronymtype,title={Acronyms}]
 
 % BIBLIOGRAPHY %
 \pagebreak
