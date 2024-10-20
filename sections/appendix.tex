@@ -1,3 +1,42 @@
 \appendix
 
 \section{Software Repositories}
+
+\subsection{Communication Protocol Specifications}
+
+The protocol used for transmitting telemetry data from the rocket to the ground station can be found in the
+\href{https://github.com/CarletonURocketry/telemetry-format/blob/gh-pages/radio_packet_format.pdf}{CarletonURocketry
+    telemetry-format repository.}
+
+The protocol used for communication between nodes on the hybrid control system network can be found in the
+\href{https://github.com/CarletonURocketry/hybrid-comm-format/blob/gh-pages/spec.pdf}{CarletonURocketry
+hybrid-comm-format} repository.
+
+\subsection{Telemetry System Repositories}
+
+All of the previous year's telemetry system code designed for the transmitter running QNX can be found here in the
+\href{https://github.com/CarletonURocketry/qnx-stack}{qnx-stack} repository. All of the sub-processes making up the
+telemetry system are listed there as GitHub sub-modules. You can also find the early design document LaTeX files for
+last year's preliminary design review there. It is not up to date with the final design of the system when it launched.
+
+The code for InSpace's ground station receiver can be found in the
+\href{https://github.com/CarletonURocketry/ground-station}{CarletonURocketry ground-station} repository. This is the
+code responsible for receiving incoming packets over LoRa and converting them into JSON for the ground station UI to
+display.
+
+The code for InSpace's ground station UI can be found in the
+\href{https://github.com/CarletonURocketry/ground-station-ui}{CarletonURocketry ground-station-ui} repository. This is
+the system responsible for displaying live telemetry data.
+
+\subsection{Hybrid Control System Repositories}
+
+The code for InSpace's hybrid control system UI can be found in the
+\href{https://github.com/CarletonURocketry/hybrid-engine-ui}{CarletonURocktry hybrid-engine-ui} repository. This code
+is responsible for displaying telemetry from the hybrid control system, such as pressure, temperature and mass measured
+by the load cell.
+
+The code for InSpace's hybrid control system can be found in the
+\href{https://github.com/CarletonURocketry/hysim}{CarletonURocketry hysim} repository. This code simulates all three
+types of nodes within the control system: the telemetry client, a control client and the launch pad control system
+itself. The code is intended to run on any POSIX system with networking capabilities so that it's core logic can be
+tested before being put on real control system hardware.

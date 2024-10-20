@@ -1,3 +1,48 @@
 \section{Previous Systems}
 
-Talk about previous year's systems.
+The previous year's avionics systems are used to guide this years designs. This section will briefly cover the flaws of
+last year's systems to provide background on the decisions made this year.
+
+\subsection{Telemetry Transmitter}
+
+\section{Hardware Design}
+
+Write about battery life
+
+Write about complications of the Raspberry Pi 4 (size, power consumption, etc)
+
+Write about issues with radio board signal (antenna placement, board design, enclosure reflection)
+
+Write about enclosure buckling and extremely tight tolerance when fitting the stack in the nosecone
+
+\section{Software Design}
+
+From a software perspective, last year's telemetry transmitter was very minimal in the quality of data that were
+transmitted.
+
+Transmitted packets contained data read directly from the onboard sensors, performing no additional sensor fusion to
+measure different states of the rocket outside of using the altitude calculation suggested by the barometric pressure
+sensor data sheet for combining temperature and pressure. This resulted in noisy measurements about rocket state, like
+current altitude and angular velocity.
+
+In addition, the system contained three sensors capable of measuring temperature. These sensors had a very high
+measurement frequency, and were being read as fast as possible using a 1.5GHz clock speed on a Raspberry Pi 4. This
+resulted in an overwhelming amount of temperature data being logged compared to other more important measurements such
+as altitude, acceleration and GPS position. This also meant much of the data being sent was temperature data. The system
+design guaranteed that GPS measurements would always be sent when measured because the GPS data was measured at only
+10Hz, but this guarantee was never extended to other types of data.
+
+The system was not robust in the way it handled failures. If the system had trouble detecting the EEPROM on the
+I2C bus with startup configuration parameters, it would exit with a failure immediately instead of re-attempting to
+connect or provide an external indication to the operator that something went wrong with the electrical connection (no
+LED indication or buzzer, etc). This lack of robustness also applied to the radio process, which would fail if it could
+not connected to the radio module over UART.
+
+The system performed logging at its maximum frequency as soon as it was armed, which caused a significant amount of
+memory to be used for logging while the rocket was sitting idle on the launch pad. Although memory was not scarce with
+last year's system which used a large SD card, it did increase power consumption during the rocket's idle period. It is
+also inconvenient to sift through logs taken while idle to get the actual flight data.
+
+Finally, there was no indication of battery life ever implemented on this system. The driver for the current/voltage
+sensor on-board was not completed in time for launch, so it was not possible to receive battery life warnings over
+telemetry or through a visual indicator in the final system.
