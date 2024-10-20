@@ -12,4 +12,28 @@ launch.
 
 \subsection{Control System Nodes}
 
+The communication within the hybrid control system network is centered around three distinct node types:
+
+\begin{itemize}
+    \item Telemetry clients
+    \item Control client
+    \item Pad control server
+\end{itemize}
+
+\subsubsection{Telemetry Clients}
+
+Telemetry clients are simply consumers of the telemetry data produced by the pad control server. There can be a
+theoretically infinite number of telemetry clients on the network at once, and they can all consume the same data being
+sent by the pad control server. This is possible through the use of UDP multicast.
+
+Telemetry clients are free to do whatever they would like with the telemetry data they receive. This could be simply
+logging it to a file, performing a statistical analysis or using it to update status LEDs/hardware on a physical device.
+The hybrid control UI is an example of a telemetry client which displays the data it receives visually.
+
+\subsubsection{Control Client}
+
+A control client is able to issue commands to the pad server. Only one control client is permitted to be connected to
+the pad server at once. This is done to prevent the receipt of conflicting commands from two controllers, eliminating a
+large suite of possible race conditions.
+
 \subsection{Hardware Design}
