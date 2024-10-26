@@ -1,8 +1,8 @@
 \appendix
 
-\section{Software Repositories}
+\section{Software Repositories} \label{apx:software-repos}
 
-\subsection{Communication Protocol Specifications}
+\subsection{Communication Protocol Specifications} \label{apx:comm-spec-repos}
 
 The protocol used for transmitting telemetry data from the rocket to the ground station can be found in the
 \href{https://github.com/CarletonURocketry/telemetry-format/blob/gh-pages/radio_packet_format.pdf}{CarletonURocketry
@@ -10,9 +10,9 @@ The protocol used for transmitting telemetry data from the rocket to the ground 
 
 The protocol used for communication between nodes on the hybrid control system network can be found in the
 \href{https://github.com/CarletonURocketry/hybrid-comm-format/blob/gh-pages/spec.pdf}{CarletonURocketry
-hybrid-comm-format} repository.
+    hybrid-comm-format} repository.
 
-\subsection{Telemetry System Repositories}
+\subsection{Telemetry System Repositories} \label{apx:telem-repos}
 
 All of the previous year's telemetry system code designed for the transmitter running QNX can be found here in the
 \href{https://github.com/CarletonURocketry/qnx-stack}{qnx-stack} repository. All of the sub-processes making up the
@@ -28,7 +28,7 @@ The code for InSpace's ground station UI can be found in the
 \href{https://github.com/CarletonURocketry/ground-station-ui}{CarletonURocketry ground-station-ui} repository. This is
 the system responsible for displaying live telemetry data.
 
-\subsection{Hybrid Control System Repositories}
+\subsection{Hybrid Control System Repositories} \label{apx:hybrid-control-repos}
 
 The code for InSpace's hybrid control system UI can be found in the
 \href{https://github.com/CarletonURocketry/hybrid-engine-ui}{CarletonURocktry hybrid-engine-ui} repository. This code
@@ -40,3 +40,13 @@ The code for InSpace's hybrid control system can be found in the
 types of nodes within the control system: the telemetry client, a control client and the launch pad control system
 itself. The code is intended to run on any POSIX system with networking capabilities so that it's core logic can be
 tested before being put on real control system hardware.
+
+\section{littlefs} \label{apx:littlefs}
+
+\textit{littlefs} is a power-failure safe file-system designed for embedded systems where data integrity is critical and
+space is constrained. It is primarily used on small NOR and NAND flash memory banks, but also supports SD and eMMC. The
+repository for \textit{littlefs} can be found on \href{https://github.com/littlefs-project/littlefs}{GitHub}, and you can read more about how it works in their
+\href{https://github.com/littlefs-project/littlefs/blob/master/DESIGN.md}{design document}.
+
+The NuttX documentation for \textit{littlefs} support can be found
+\href{https://nuttx.apache.org/docs/latest/components/filesystem/littlefs.html}{here, on their website}.
