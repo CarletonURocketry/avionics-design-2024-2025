@@ -28,4 +28,4 @@ Building On Windows: Assuming you have LaTeX (specifically `latexmk`) installed 
 
 <!--Links-->
 
-[pdf]: https://github.com/CarletonURocketry/avionics-design-2024-2025/blob/gh-pages/design.pdf
+[pdf]: https://github.com/CarletonURocketry/avionics-design-2024-2025/blob/gh-pages/CUInSpace%20Avionics%20Systems%202024%202025.pdf
