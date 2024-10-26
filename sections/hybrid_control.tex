@@ -36,4 +36,34 @@ A control client is able to issue commands to the pad server. Only one control c
 the pad server at once. This is done to prevent the receipt of conflicting commands from two controllers, eliminating a
 large suite of possible race conditions.
 
+The commands sent from a control client are either arming commands or commands for actuating (turning on or off)
+actuators. Control clients are simple in that they only send these commands to the pad server and wait for a response
+indicating success or failure of the command. Control clients \textbf{do not} maintain any state about the actuators
+they control, they only blindly issue commands and receive indication of success or failure. In this way, all state is
+maintained on the pad server which preserves a single source of truth in the system. This makes it impossible for the
+control client to get out of sync with the real system state.
+
+\subsubsection{Pad Server}
+
+The pad server is the most complicated of the nodes. The pad server produces all the telemetry data from the system
+sensors, which it sends over \gls{udp} multicast. This design allows a theoretically infinite number of telemetry
+clients to consume telemetry data, while the server only has to perform a single "send" operation.
+
+The pad server simultaneously handles incoming commands from the control client, to which it responds with a success or
+failure acknowledgement. The pad server is responsible for maintaining internal state about the actuators and current
+arming level, which it uses to decide whether the command is currently possible. For example, a command to ignite the
+igniter is not allowed until the main valve for the oxidizer has been opened, and that itself depends on a sequence of
+prior conditions. There is a progression of arming escalation which must be adhered to.
+
+Responding to commands from the control client is prioritized above telemetry. At the top priority is the emergency
+abort sequence for dumping the oxidizer in the tank when pressure spikes above nominal levels are detected, or when
+network connection has been lost for a predefined time duration.
+
+\subsubsection{Combination Nodes}
+
+Combination nodes are those nodes which implement both the control client and telemetry client nodes on one system. This
+may useful for a control box with a heads up display for telemetry readings, which the operator may need to use to
+inform command decisions. These systems can use telemetry data to inform sending commands, etc. but should still never
+store any state about the system. All state information can be queried from the pad server.
+
 \subsection{Hardware Design}
