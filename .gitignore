@@ -26,3 +26,4 @@
 
 # VS Code Workspace Files
 *.code-workspace
+.vscode/
