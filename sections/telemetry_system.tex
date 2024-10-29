@@ -23,15 +23,24 @@ addressed are:
 
 \fxwarning{Add sensor systems design}
 
-\section{Software Design}
+\section{Real-Time Operating System}
 
-\subsection{Data Logging}
+The telemetry transmitter will run a \gls{rtos} called Apache NuttX (referred to as NuttX from here onward). NuttX is
+an embedded \gls{rtos} which is designed to have an incredibly small footprint through its many configuration options.
+\cite{nuttx-about}. It is \gls{posix} compliant and also adheres to several other standards in the embedded systems
+space for APIs that are not governed by \gls{posix}. \cite{nuttx-about} It's completely open source under the Apache
+2.0 license and provides a host of existing tools and drivers for file systems, memory devices, analog devices and
+digital sensors/peripherals. NuttX has an open community forum for getting support and reporting bugs, which has been
+an asset during development. \Gls{cuinspace} is also able to contribute driver code back to the project for the benefit
+of others, and has been doing so.
+
+\section{Data Logging}
 
 Data logging during flight will be done in a significantly more robust manner than previous years. This involves more
 physically secure memory for logging, as well as power-failure guarantees. We will also be conserving space through
 lift-off and landing detection.
 
-\subsubsection{Data Integrity}
+\subsection{Data Integrity}
 
 The physical memory being used for flight data logging is a standard microSD card. This memory was chosen because it is
 cheap, ubiquitous, has an extremely large capacity and is easy to remove for data analysis on a computer immediately
@@ -65,7 +74,7 @@ the \textit{littlefs} partition to the FAT partition upon landing, when there is
 corrupting the transfer. The FAT partition will be the first partition on the microSD's partition table so that it is
 detected properly on Windows machines.
 
-\subsubsection{Logging Space Conservation}
+\subsection{Logging Space Conservation}
 
 In order to preserve logging space and avoid filling up memory with telemetry data being collected while the rocket is
 idle on the launch rail, we will be using lift-off and landing detection to trigger logging operations. The state
