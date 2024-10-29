@@ -34,6 +34,58 @@ digital sensors/peripherals. NuttX has an open community forum for getting suppo
 an asset during development. \Gls{cuinspace} is also able to contribute driver code back to the project for the benefit
 of others, and has been doing so.
 
+\subsection{Driver Code}
+
+Drivers in NuttX are interacted with via a POSIX interface, composed primarily of the following standard functions:
+
+\begin{itemize}
+    \item \texttt{open(const char *path, int oflag, ...)}
+    \item \texttt{close(int fildes)}
+    \item \texttt{read(int fildes, void *buf, size\_t nbyte)}
+    \item \texttt{write(int fildes, void *buf, size\_t nbyte)}
+    \item \texttt{ioctl(int fildes, int request, ...)}
+\end{itemize}
+
+This allows devices to be interacted with through the regular path name space, just like files. This is standard for
+Unix systems, and makes writing application code incredibly convenient.
+
+A major benefit of NuttX's \gls{posix} interface is code portability. By abstracting away low-level code through
+drivers which act as files, application code can run on any other \gls{posix} system. This opens up testing
+possibilities that allow developers to write and debug application code on their own Linux/MacOS machines before
+flashing the microcontroller.
+
+NuttX also supplies drivers of its own for very standard communication protocols such as \gls{uart}, \gls{i2c},
+\gls{spi}, etc. This facilitates the writing of device drivers for simple digital sensors such as an \gls{imu} or
+temperature sensor.
+
+\subsection{Scheduling}
+
+Task scheduling within NuttX can be easily performed using \gls{posix} \glspl{api} again. It is possible to create
+multiple processes or threads which are scheduled by the operating system using a methodology chosen by the developer
+(first-in-first-out, round robin, etc.). This also allows \gls{io} operations to be performed alongside the processor
+performing application logic.
+
+\Gls{cuinspace} will be leveraging scheduling features to write multi-threaded programs. This allows us to split tasks
+by priority and ensure that the highest priority tasks are given time in the processor. In the case of the telemetry
+system, highest priority will be given to data logging and radio transmission operations, since those require very
+little processor time and only have to trigger short bursts of \gls{io} operations.
+
+\textbf{Task priorities from highest to lowest:}
+
+\begin{enumerate}
+    \item SD card logging
+    \item Radio transmission
+    \item Sensor data collection
+    \item Packet encoding
+\end{enumerate}
+
+Packet encoding is the most \gls{cpu} intensive task but is also lowest priority since the \gls{io} operations are
+critical and take very little \gls{cpu} time, so they can afford to be ushered in to quickly trigger an \gls{io}
+operation and relinquish the \gls{cpu}.
+
+The telemetry system will immediately perform boot operations to load all the device drivers before launching into the
+application code at power-on.
+
 \section{Data Logging}
 
 Data logging during flight will be done in a significantly more robust manner than previous years. This involves more
@@ -124,4 +176,5 @@ system re-enters the \textit{AIRBORNE} state, which is not possible to trigger f
 
 \section{Enclosure Design}
 
+%This might be in aerostructures PDR, not certain.
 %This might be in aerostructures PDR, not certain.
