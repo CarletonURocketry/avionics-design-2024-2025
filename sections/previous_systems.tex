@@ -1,21 +1,35 @@
-\section{Previous Systems}
+\part{Previous Systems}
 
-The previous year's avionics systems are used to guide this years designs. This section will briefly cover the flaws of
-last year's systems to provide background on the decisions made this year.
+The previous year's avionics systems are used to guide this years designs. This section will briefly cover the flaws
+oflast year's systems to provide background on the decisions made this year.
 
-\subsection{Flight Computer \& Transmitter}
+\section{Flight Computer \& Transmitter}
 
 The flight computer unit designed in the 2023-2024 academic year was endearingly referred to as the "QNX Stack" due to
 its on-board \gls{mcu} running the \gls{qnx} \gls{rtos}. The assembled version of the unit which was flown at \gls{sac}
 is pictured in Figure \ref{fig:preflight-stack}.
 
-\subsubsection{Hardware Design}
+\subsection{Hardware Design}
 
-Write about battery life
+The most glaring issue with the hardware design from last year was the selection of the Raspberry Pi 4B as the MCU for
+the system. The two largest issues with the Raspberry Pi were it's high power consumption and large mechanical size.
 
-Write about complications of the Raspberry Pi 4 (size, power consumption, etc)
+The high power consumption resulted in the system only having around 8 hours of battery life, even with
+\qty{4000}{\milli\ampere\hour}. Although this number is already well below the idea battery life it could have been
+even lower depending on the task being performed. This is because the power consumption if a Raspberry Pi (like most
+MCU's) is highly dependent on the task being performed. Were the Pi performing more demanding tasks the battery life
+could have gotten as low as 2 hours or less.
 
-Write about issues with radio board signal (antenna placement, board design, enclosure reflection)
+The large mechanical size of the Raspberry Pi was also a major issue. The Raspberry Pi is a relatively large single
+board computer with many unused ports and connectors. Most of the features on this board were not used nor beneficial
+for the telemetry system and unnecessarily increased the size of the system to a point where it was extremely difficult
+to fit in the nosecone of the rocket.
+
+\section{RF Design}
+Write about issues with radio board signal (antenna placement, board design, enclosure reflection) \fxwarning{Needs to
+    be added.}
+
+\section{Enclosure Design}
 
 The placement of the antennas on the \gls{qnx} stack was not optimal. As can be seen in Figure
 \ref{fig:preflight-stack}, the signal radiation from the longer transmitter antenna is partially blocked by the metal
@@ -61,12 +75,11 @@ responsible for arming the entire telemetry system.
     \label{fig:rad-cad}
 \end{figure}
 
-The bulkhead clearance problem is also the reason for the close antenna placement shown in Figure
-\ref{fig:preflight-stack}. Any further spacing between the antennas would prevent them from clearing the bulkhead due
-to the protruding mounting holes on either side. A \gls{cad} visualization of this problem can be seen in Figure
-\ref{fig:rad-cad}. In fact, 90 degree \gls{sma} connector adapters were used on the final system because the 90 degree
-bend on the antennas themselves extended too far, causing them to hit the bulkhead edge when the stack was lowered into
-the nosecone.
+The bulkhead clearance problem is also the reason for the close antenna placement shown in \Cref{fig:preflight-stack}.
+Any further spacing between the antennas would prevent them from clearing the bulkhead due to the protruding mounting
+holes on either side. A \gls{cad} visualization of this problem can be seen in \Cref{fig:rad-cad}. In fact, 90 degree
+\gls{sma} connector adapters were used on the final system because the 90 degree bend on the antennas themselves
+extended too far, causing them to hit the bulkhead edge when the stack was lowered into the nosecone.
 
 \begin{figure}[H]
     \center
@@ -76,8 +89,8 @@ the nosecone.
 \end{figure}
 
 The enclosure of the QNX stack exhibited buckling when it was recovered post-flight. The bent shape required that the
-supporting bulkhead be shaved down with a dremel tool in order to extract it. The buckling is visible Figure
-\ref{fig:stack-bent}. All boards survived despite the buckling pushing apart the 3D-printed rails far enough for the
+supporting bulkhead be shaved down with a dremel tool in order to extract it. The buckling is visible
+\Cref{fig:stack-bent}. All boards survived despite the buckling pushing apart the 3D-printed rails far enough for the
 boards to come loose. No simulation of the enclosure was performed in advance of flight, which may have predicted these
 structural problems under shock load from launch and parachute deployment.
 
@@ -88,7 +101,7 @@ structural problems under shock load from launch and parachute deployment.
     \label{fig:stack-bent}
 \end{figure}
 
-\subsubsection{Software Design}
+\subsection{Software Design}
 
 From a software perspective, last year's telemetry transmitter was very minimal in the quality of data that were
 transmitted.

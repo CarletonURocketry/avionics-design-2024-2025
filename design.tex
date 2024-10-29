@@ -6,6 +6,10 @@
 \usepackage[style=ieee]{biblatex}
 \addbibresource{./references.bib}
 
+\usepackage{fixme} % For notes and comments
+
+\usepackage{siunitx} % For SI unit formatting
+
 \usepackage{graphicx} % Include graphics %
 \usepackage{float} % Make sure that figures stay where they're defined %
 
@@ -21,6 +25,8 @@
     pdfborderstyle={/S/U/W 1},
 ]{hyperref}
 
+\usepackage[nameinlink]{cleveref} % For hyperlinked references
+
 % Document font setup %
 \usepackage{charter}
 
@@ -34,7 +40,13 @@
     \vspace{0.2in}
     \includegraphics[width=4in]{./assets/images/inspace-logo.png}
 }
-\author{Matteo Golin}
+\author{
+    Matteo Golin \\
+    Roland Neill \\
+    Emma Rickets \\ 
+    Sean Dauphinee \\
+    Elias Hawa
+}
 \date{
     October 8, 2023 \\
     Modified: \today
@@ -66,8 +78,9 @@
 
 \input{sections/telemetry_system.tex}
 
-\input{sections/hybrid_control.tex}
+\include{sections/hybrid_control.tex}
 
+\include{sections/deployment_system.tex}
 
 % GLOSSARY %
 \pagebreak

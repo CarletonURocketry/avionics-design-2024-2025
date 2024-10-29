@@ -1,12 +1,10 @@
-\section{Hybrid Control System}
+\part{Hybrid Ground Control Systems}
 
-This year's hybrid control system is a completely new project for avionics with no prior system to inform its design.
-The current working prototype is an Arduino based control system which has been difficult to maintain and use. The
-system was designed using breadboard electronics and it is very difficult to organize the jumper wires or perform
-repairs on the system. It also does not have the ability to detect connection interruptions, the user interface does not
-update at the speed desired for monitoring the system and it has a tendency to crash spuriously. This prototype system
-has sufficed for preliminary testing of the hybrid in cold flows, but must be updated for static fire testing and
+This year's hybrid control system is a completely new project for avionics with no prior system to inform its design. The current working prototype is an Arduino based control system which has been difficult to maintain and use. The system was designed using breadboard electronics and it is very difficult to organize the jumper wires or perform repairs on the system. It also does not have the ability to detect connection interruptions, the user interface does not update at the speed desired for monitoring the system and it has a tendency to crash spuriously. This prototype system has sufficed for preliminary testing of the hybrid in cold flows, but must be updated for static fire testing and
 launch.
+
+
+\section{Software Design}
 
 \subsection{Network Infrastructure}
 
@@ -22,48 +20,26 @@ The communication within the hybrid control system network is centered around th
 
 \subsubsection{Telemetry Clients}
 
-Telemetry clients are simply consumers of the telemetry data produced by the pad control server. There can be a
-theoretically infinite number of telemetry clients on the network at once, and they can all consume the same data being
-sent by the pad control server. This is possible through the use of UDP multicast.
+Telemetry clients are simply consumers of the telemetry data produced by the pad control server. There can be a theoretically infinite number of telemetry clients on the network at once, and they can all consume the same data being sent by the pad control server. This is possible through the use of UDP multicast.
 
-Telemetry clients are free to do whatever they would like with the telemetry data they receive. This could be simply
-logging it to a file, performing a statistical analysis or using it to update status LEDs/hardware on a physical device.
-The hybrid control UI is an example of a telemetry client which displays the data it receives visually.
+Telemetry clients are free to do whatever they would like with the telemetry data they receive. This could be simply logging it to a file, performing a statistical analysis or using it to update status LEDs/hardware on a physical device. The hybrid control UI is an example of a telemetry client which displays the data it receives visually.
 
 \subsubsection{Control Client}
 
-A control client is able to issue commands to the pad server. Only one control client is permitted to be connected to
-the pad server at once. This is done to prevent the receipt of conflicting commands from two controllers, eliminating a
-large suite of possible race conditions.
+A control client is able to issue commands to the pad server. Only one control client is permitted to be connected to the pad server at once. This is done to prevent the receipt of conflicting commands from two controllers, eliminating a large suite of possible race conditions.
 
-The commands sent from a control client are either arming commands or commands for actuating (turning on or off)
-actuators. Control clients are simple in that they only send these commands to the pad server and wait for a response
-indicating success or failure of the command. Control clients \textbf{do not} maintain any state about the actuators
-they control, they only blindly issue commands and receive indication of success or failure. In this way, all state is
-maintained on the pad server which preserves a single source of truth in the system. This makes it impossible for the
-control client to get out of sync with the real system state.
+The commands sent from a control client are either arming commands or commands for actuating (turning on or off) actuators. Control clients are simple in that they only send these commands to the pad server and wait for a response indicating success or failure of the command. Control clients \textbf{do not} maintain any state about the actuators they control, they only blindly issue commands and receive indication of success or failure. In this way, all state is maintained on the pad server which preserves a single source of truth in the system. This makes it impossible for the control client to get out of sync with the real system state.
 
 \subsubsection{Pad Server}
 
-The pad server is the most complicated of the nodes. The pad server produces all the telemetry data from the system
-sensors, which it sends over \gls{udp} multicast. This design allows a theoretically infinite number of telemetry
-clients to consume telemetry data, while the server only has to perform a single "send" operation.
+The pad server is the most complicated of the nodes. The pad server produces all the telemetry data from the system sensors, which it sends over \gls{udp} multicast. This design allows a theoretically infinite number of telemetry clients to consume telemetry data, while the server only has to perform a single "send" operation.
 
-The pad server simultaneously handles incoming commands from the control client, to which it responds with a success or
-failure acknowledgement. The pad server is responsible for maintaining internal state about the actuators and current
-arming level, which it uses to decide whether the command is currently possible. For example, a command to ignite the
-igniter is not allowed until the main valve for the oxidizer has been opened, and that itself depends on a sequence of
-prior conditions. There is a progression of arming escalation which must be adhered to.
+The pad server simultaneously handles incoming commands from the control client, to which it responds with a success or failure acknowledgement. The pad server is responsible for maintaining internal state about the actuators and current arming level, which it uses to decide whether the command is currently possible. For example, a command to ignite the igniter is not allowed until the main valve for the oxidizer has been opened, and that itself depends on a sequence of prior conditions. There is a progression of arming escalation which must be adhered to.
 
-Responding to commands from the control client is prioritized above telemetry. At the top priority is the emergency
-abort sequence for dumping the oxidizer in the tank when pressure spikes above nominal levels are detected, or when
-network connection has been lost for a predefined time duration.
+Responding to commands from the control client is prioritized above telemetry. At the top priority is the emergency abort sequence for dumping the oxidizer in the tank when pressure spikes above nominal levels are detected, or when network connection has been lost for a predefined time duration.
 
 \subsubsection{Combination Nodes}
 
-Combination nodes are those nodes which implement both the control client and telemetry client nodes on one system. This
-may useful for a control box with a heads up display for telemetry readings, which the operator may need to use to
-inform command decisions. These systems can use telemetry data to inform sending commands, etc. but should still never
-store any state about the system. All state information can be queried from the pad server.
+Combination nodes are those nodes which implement both the control client and telemetry client nodes on one system. This may be useful for a control box with a heads up display for telemetry readings, which the operator may need to use to inform command decisions. These systems can use telemetry data to inform sending commands, etc.\ but should still never store any state about the system. All state information can be queried from the pad server.
 
-\subsection{Hardware Design}
+\section{Hardware Design}
