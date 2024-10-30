@@ -167,7 +167,7 @@ to flight based on simulations on descent speed by the recovery team.
 
 Once the landing is detected, the system will enter the \textit{LANDED} state. In this state the "airborne bit" will be
 set to 0 and the "landed bit" will be set to 1. The system will begin copying all logged flight data from the
-\textit{littlefs} partition to the FAT filesystem partition on the SD card. During this time it continues to transmit
+\textit{littlefs} partition to the FAT file system partition on the SD card. During this time it continues to transmit
 telemetry over radio.
 
 Once all the data is copied over, the "landed bit" will be set to 0, and the system will re-enter the \textit{IDLE}
