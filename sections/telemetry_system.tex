@@ -23,15 +23,79 @@ addressed are:
 
 \fxwarning{Add sensor systems design}
 
-\section{Software Design}
+\section{Real-Time Operating System}
 
-\subsection{Data Logging}
+The telemetry transmitter will run a \gls{rtos} called Apache NuttX (referred to as NuttX from here onward). NuttX is
+an embedded \gls{rtos} which is designed to have an incredibly small footprint through its many configuration options.
+\cite{nuttx-about}. It is \gls{posix} compliant and also adheres to several other standards in the embedded systems
+space for APIs that are not governed by \gls{posix}. \cite{nuttx-about} It's completely open source under the Apache
+2.0 license and provides a host of existing tools and drivers for file systems, memory devices, analog devices and
+digital sensors/peripherals. NuttX has an open community forum for getting support and reporting bugs, which has been
+an asset during development. \Gls{cuinspace} is also able to contribute driver code back to the project for the benefit
+of others, and has been doing so.
+
+\subsection{Driver Code}
+
+Drivers in NuttX are interacted with via a POSIX interface, composed primarily of the following standard functions:
+
+\begin{itemize}
+    \item \texttt{open(const char *path, int oflag, ...)}
+    \item \texttt{close(int fildes)}
+    \item \texttt{read(int fildes, void *buf, size\_t nbyte)}
+    \item \texttt{write(int fildes, void *buf, size\_t nbyte)}
+    \item \texttt{ioctl(int fildes, int request, ...)}
+\end{itemize}
+
+This allows devices to be interacted with through the regular path name space, just like files. This is standard for
+Unix systems, and makes writing application code incredibly convenient.
+
+A major benefit of NuttX's \gls{posix} interface is code portability. By abstracting away low-level code through
+drivers which act as files, application code can run on any other \gls{posix} system. This opens up testing
+possibilities that allow developers to write and debug application code on their own Linux/MacOS machines before
+flashing the microcontroller.
+
+NuttX also supplies drivers of its own for very standard communication protocols such as \gls{uart}, \gls{i2c},
+\gls{spi}, etc. This facilitates the writing of device drivers for simple digital sensors such as an \gls{imu} or
+temperature sensor.
+
+\subsection{Scheduling}
+
+Task scheduling within NuttX can be easily performed using \gls{posix} \glspl{api} again. It is possible to create
+multiple processes or threads which are scheduled by the operating system using a methodology chosen by the developer
+(first-in-first-out, round robin, etc.). This also allows \gls{io} operations to be performed alongside the processor
+performing application logic.
+
+\Gls{cuinspace} will be leveraging scheduling features to write multi-threaded programs. This allows us to split tasks
+by priority and ensure that the highest priority tasks are given time in the processor. In the case of the telemetry
+system, highest priority will be given to data logging and radio transmission operations, since those require very
+little processor time and only have to trigger short bursts of \gls{io} operations.
+
+\textbf{Task priorities from highest to lowest:}
+
+\begin{enumerate}
+    \item SD card logging
+    \item Radio transmission
+    \item Sensor data collection
+    \item Packet encoding
+\end{enumerate}
+
+Packet encoding is the most \gls{cpu} intensive task but is also lowest priority since the \gls{io} operations are
+critical and take very little \gls{cpu} time, so they can afford to be ushered in to quickly trigger an \gls{io}
+operation and relinquish the \gls{cpu}.
+
+The telemetry system will immediately perform boot operations to load all the device drivers before launching into the
+application code at power-on.
+
+\section{Data Delivery}
 
 Data logging during flight will be done in a significantly more robust manner than previous years. This involves more
-physically secure memory for logging, as well as power-failure guarantees. We will also be conserving space through
-lift-off and landing detection.
+physically secure memory for logging, as well as power-failure guarantees. \Gls{cuinspace} will also be conserving
+space through lift-off and landing detection.
 
-\subsubsection{Data Integrity}
+Data transmission has worked reliably from a protocol standpoint, and the previous design will be continued and
+expanded upon.
+
+\subsection{Data Log Integrity}
 
 The physical memory being used for flight data logging is a standard microSD card. This memory was chosen because it is
 cheap, ubiquitous, has an extremely large capacity and is easy to remove for data analysis on a computer immediately
@@ -43,12 +107,12 @@ SD card to fall out in flight, and also an opportunity for vibrations to tempora
 between the card and the \gls{mcu}.
 
 To address these risks, \gls{cuinspace} is securing the SD card in a cage-like slot, specifically manufactured to
-survive shock loads of up to 50g and have electronic discontinuity for only up to 1 microsecond. An image of this
-microSD slot can be seen in \Cref{fig:sd-card-cage}.
+survive shock loads of up to 50g and have electronic discontinuity for only up to 1 microsecond.
+\cite{sd-cage-datasheet} An image of this microSD slot can be seen in \Cref{fig:sd-card-cage}.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=2in]{./assets/images/sd-card-cage.jpg}
+    \includegraphics[width=2in]{./assets/images/sd-card-cage.png}
     \caption{Shock load resistant microSD card slot \cite{sd-card-cage}}
     \label{fig:sd-card-cage}
 \end{figure}
@@ -65,16 +129,16 @@ the \textit{littlefs} partition to the FAT partition upon landing, when there is
 corrupting the transfer. The FAT partition will be the first partition on the microSD's partition table so that it is
 detected properly on Windows machines.
 
-\subsubsection{Logging Space Conservation}
+\subsection{Logging Space Conservation}
 
 In order to preserve logging space and avoid filling up memory with telemetry data being collected while the rocket is
-idle on the launch rail, we will be using lift-off and landing detection to trigger logging operations. The state
-machine used to govern this portion of the system can be seen in \Cref{fig:logging-fsm}.
+idle on the launch rail, we will be using lift-off and landing detection to trigger logging operations. The \gls{fsm}
+used to govern this portion of the system can be seen in \Cref{fig:logging-fsm}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=4in]{./assets/diagrams/Flight State FSM.png}
-    \caption{Logging control finite state machine}
+    \caption{Logging control \gls{fsm}}
     \label{fig:logging-fsm}
 \end{figure}
 
@@ -103,7 +167,7 @@ to flight based on simulations on descent speed by the recovery team.
 
 Once the landing is detected, the system will enter the \textit{LANDED} state. In this state the "airborne bit" will be
 set to 0 and the "landed bit" will be set to 1. The system will begin copying all logged flight data from the
-\textit{littlefs} partition to the FAT filesystem partition on the SD card. During this time it continues to transmit
+\textit{littlefs} partition to the FAT file system partition on the SD card. During this time it continues to transmit
 telemetry over radio.
 
 Once all the data is copied over, the "landed bit" will be set to 0, and the system will re-enter the \textit{IDLE}
@@ -111,7 +175,31 @@ state. At this point, the system still continues transmitting GPS coordinates fo
 safe on the SD card for post-flight extraction. Logs on the \textit{littlefs} partition are only over-written when the
 system re-enters the \textit{AIRBORNE} state, which is not possible to trigger from the ground.
 
+\subsection{Data Transmission}
+
+The other method in which \gls{cuinspace} records telemetry data is via live radio broadcasting while the radio is in
+flight. This allows a downlink ground station to receive real-time updates about the rocket state while it is in-
+flight.
+
+In order to transmit telemetry data over radio, \gls{cuinspace} has developed a radio packet encoding format. This
+format can be found in Appendix \ref{apx:comm-spec-repos}. The format covers multiple different data types that are
+recorded about the rocket state, such as altitude, acceleration, \gls{gps} coordinates, etc. \cite{radio-comms}.
+Importantly, each radio packet starts with a header containing the amateur radio call-sign of the \gls{cuinspace}
+operator responsible for flying the system. \cite{radio-comms} The original specification did not include sufficient
+space to append a call-zone indicator to the call-sign, which has since been amended in the latest version. This is a
+requirement for Canadians broadcasting in the United States \cite{foreign-broadcast}, as \gls{cuinspace} does at
+\gls{sac}.
+
+Since \gls{cuinspace}'s rockets achieve altitudes up to around 9 kilometres, it is necessary to choose a radio unit
+that can transmit up to such a long range. Unfortunately, long range transmissions are achieved with a trade-off in
+bandwidth. This means that the radio unit is not always able to match the measurement speed of the telemetry system.
+The on-board data logging is fast enough to capture the full resolution of measured data, but since the radio has low
+bandwidth, it is only used to broadcast the most recently measured packet at the time when it becomes ready for another
+transmission.
+
 \section{Radio Frequency Design}
+
+% TODO: in addition to board design, explain chosen LoRa parameters
 
 \section{Enclosure Design}
 

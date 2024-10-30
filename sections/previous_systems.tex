@@ -25,11 +25,15 @@ board computer with many unused ports and connectors. Most of the features on th
 for the telemetry system and unnecessarily increased the size of the system to a point where it was extremely difficult
 to fit in the nosecone of the rocket.
 
-\section{RF Design}
-Write about issues with radio board signal (antenna placement, board design, enclosure reflection) \fxwarning{Needs to
-    be added.}
+\subsection{Enclosure Design}
 
-\section{Enclosure Design}
+The avionics enclosure was designed as a stack-up of \gls{srad} \glspl{pcb}. It was made out of aluminum to be
+lightweight, with 3D printed rails and battery compartment made out of ABS filament. The enclosure sat within the
+rocket's fibreglass nosecone (for radio transparency), mounted to an aluminum bulkhead. The \glspl{pcb} themselves were
+held in place using a threaded rod. Screw switches to arm both the \gls{srad} system and \gls{cots} Featherweight GPS
+were mounted to the side of the enclosure with 3D printed shelves.
+
+\subsubsection{Radio Signal Integrity}
 
 The placement of the antennas on the \gls{qnx} stack was not optimal. As can be seen in Figure
 \ref{fig:preflight-stack}, the signal radiation from the longer transmitter antenna is partially blocked by the metal
@@ -49,6 +53,8 @@ away from the receiver during that time.
     \caption{The 2023-2024 avionics flight computer unit, "QNX Stack"}
     \label{fig:preflight-stack}
 \end{figure}
+
+\subsubsection{Sizing}
 
 The QNX stack enclosure was sized in order to fit the largest member: the Raspberry Pi 4B mounted on a \gls{srad}
 \gls{mcu} board. \Glspl{pcb} were sized to 90mm by 90mm, which the enclosure accommodated. This large size was
@@ -121,13 +127,14 @@ temperature data. The system design guaranteed that \gls{gps} data would always 
 The system was not robust in the way it handled failures. If the system had trouble detecting the \gls{eeprom} on the
 \gls{i2c} bus with startup configuration parameters, it would exit with a failure immediately instead of re-attempting
 to connect or provide an external indication to the operator that something went wrong with the electrical connection
-(no LED indication or buzzer, etc). This lack of robustness also applied to the radio process, which would fail if it
-could not connected to the radio module over \gls{uart}.
+(no LED indication or buzzer, etc). This lack of robustness also applied to the radio's control process, which would
+fail if it could not connect to the radio module over \gls{uart}.
 
 The system performed logging at its maximum frequency as soon as it was armed, which caused a significant amount of
-memory to be used for logging while the rocket was sitting idle on the launch pad. Although memory was not scarce with
-last year's system which used a large SD card, it did increase power consumption during the rocket's idle period. It is
-also inconvenient to sift through logs taken while idle to get the actual flight data.
+storage to be used for logging while the rocket was sitting idle on the launch pad. Although storage memory was not
+scarce with last year's system (which used a 128GB SD card), it did increase power consumption during the rocket's idle
+period. It is also inconvenient to sift through all the logs from the rocket's idle state in order to get the actual
+flight data.
 
 Finally, there was no indication of battery life ever implemented on this system. The driver for the current/voltage
 sensor on-board was not completed in time for launch, so it was not possible to receive battery life warnings over
