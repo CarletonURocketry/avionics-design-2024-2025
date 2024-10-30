@@ -86,13 +86,16 @@ operation and relinquish the \gls{cpu}.
 The telemetry system will immediately perform boot operations to load all the device drivers before launching into the
 application code at power-on.
 
-\section{Data Logging}
+\section{Data Delivery}
 
 Data logging during flight will be done in a significantly more robust manner than previous years. This involves more
-physically secure memory for logging, as well as power-failure guarantees. We will also be conserving space through
-lift-off and landing detection.
+physically secure memory for logging, as well as power-failure guarantees. \Gls{cuinspace} will also be conserving
+space through lift-off and landing detection.
 
-\subsection{Data Integrity}
+Data transmission has worked reliably from a protocol standpoint, and the previous design will be continued and
+expanded upon.
+
+\subsection{Data Log Integrity}
 
 The physical memory being used for flight data logging is a standard microSD card. This memory was chosen because it is
 cheap, ubiquitous, has an extremely large capacity and is easy to remove for data analysis on a computer immediately
@@ -172,9 +175,32 @@ state. At this point, the system still continues transmitting GPS coordinates fo
 safe on the SD card for post-flight extraction. Logs on the \textit{littlefs} partition are only over-written when the
 system re-enters the \textit{AIRBORNE} state, which is not possible to trigger from the ground.
 
+\subsection{Data Transmission}
+
+The other method in which \gls{cuinspace} records telemetry data is via live radio broadcasting while the radio is in
+flight. This allows a downlink ground station to receive real-time updates about the rocket state while it is in-
+flight.
+
+In order to transmit telemetry data over radio, \gls{cuinspace} has developed a radio packet encoding format. This
+format can be found in Appendix \ref{apx:comm-spec-repos}. The format covers multiple different data types that are
+recorded about the rocket state, such as altitude, acceleration, \gls{gps} coordinates, etc. \cite{radio-comms}.
+Importantly, each radio packet starts with a header containing the amateur radio call-sign of the \gls{cuinspace}
+operator responsible for flying the system. \cite{radio-comms} The original specification did not include sufficient
+space to append a call-zone indicator to the call-sign, which has since been amended in the latest version. This is a
+requirement for Canadians broadcasting in the United States \cite{foreign-broadcast}, as \gls{cuinspace} does at
+\gls{sac}.
+
+Since \gls{cuinspace}'s rockets achieve altitudes up to around 9 kilometres, it is necessary to choose a radio unit
+that can transmit up to such a long range. Unfortunately, long range transmissions are achieved with a trade-off in
+bandwidth. This means that the radio unit is not always able to match the measurement speed of the telemetry system.
+The on-board data logging is fast enough to capture the full resolution of measured data, but since the radio has low
+bandwidth, it is only used to broadcast the most recently measured packet at the time when it becomes ready for another
+transmission.
+
 \section{Radio Frequency Design}
+
+% TODO: in addition to board design, explain chosen LoRa parameters
 
 \section{Enclosure Design}
 
-%This might be in aerostructures PDR, not certain.
 %This might be in aerostructures PDR, not certain.
