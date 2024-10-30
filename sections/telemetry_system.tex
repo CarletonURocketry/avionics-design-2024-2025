@@ -129,13 +129,13 @@ detected properly on Windows machines.
 \subsection{Logging Space Conservation}
 
 In order to preserve logging space and avoid filling up memory with telemetry data being collected while the rocket is
-idle on the launch rail, we will be using lift-off and landing detection to trigger logging operations. The state
-machine used to govern this portion of the system can be seen in \Cref{fig:logging-fsm}.
+idle on the launch rail, we will be using lift-off and landing detection to trigger logging operations. The \gls{fsm}
+used to govern this portion of the system can be seen in \Cref{fig:logging-fsm}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=4in]{./assets/diagrams/Flight State FSM.png}
-    \caption{Logging control finite state machine}
+    \caption{Logging control \gls{fsm}}
     \label{fig:logging-fsm}
 \end{figure}
 
