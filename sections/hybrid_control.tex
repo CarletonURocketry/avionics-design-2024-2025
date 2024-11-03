@@ -10,6 +10,23 @@ launch.
 
 \subsection{Network Infrastructure}
 
+Given that the launch pad and control base are separated by several hundred meters, it will be infeasible to establish 
+a wired connection between the two. For this reason, communication between the launch pad and the control base will be
+carried out over wireless ethernet using two Ubiquiti Litebeam M5 wireless network bridges. These network bridges will connect 
+the \glsxtrfull{lan} at the control base and the \glsxtrshort{lan} at the launch pad, allowing them to communicate as if they 
+were in the same LAN.
+
+Each Litebeam M5 is powered using a 24V, 0.2A power over ethernet (PoE) adapter. <talk about specs>. 
+
+Two types of communication will be handled over the network. The first is telemetry data sent from the launch pad which will be 
+received by a telemetry client at the control base. Telemetry data will be transmitted from the launch pad to a \glsxtrfull{udp}
+multicast group which the telemetry client will join. While transmitting data to a \glsxtrshort{udp} multicast address may be 
+slightly slower than traditional \glsxtrshort{udp} unicast communication which transmits to a single device, transmitting to a 
+multicast address provides redundancy in the sense that multiple clients are able to receive the same data should any single client
+fail.
+
+The second type of communication to be transmitted is control packets
+
 \subsection{Control System Nodes}
 
 \subsection{Hardware Design}
