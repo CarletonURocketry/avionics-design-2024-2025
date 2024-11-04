@@ -11,8 +11,8 @@ and launch.
 \section{Network Infrastructure}
 
 The hybrid control system will be network based to make use of the robust protocols which already exist for
-communication over a network. The primary components of the network control system are Ubiquity Litebeam M5 dishes for
-long range wireless networking, pictured in Figure \ref{fig:ubiquity-dish}. This avoids the need for Ethernet cabling
+communication over a network. The primary components of the network control system are Ubiquity Litebeam M5 network bridges for
+long range wireless communication, pictured in Figure \ref{fig:ubiquity-dish}. This avoids the need for Ethernet cabling
 exceeding 2,000 feet, which is inconvenient to set up.
 
 \begin{figure}[H]
@@ -21,8 +21,6 @@ exceeding 2,000 feet, which is inconvenient to set up.
     \caption{Ubiquity Litebeam M5 wireless dish \cite{ubiquity-dish}}
     \label{fig:ubiquity-dish}
 \end{figure}
-
-\subsection{Topology}
 
 \subsection{Control System Nodes}
 
@@ -101,6 +99,26 @@ Combination nodes are those nodes which implement both the control client and te
 This may be useful for a control box with a heads up display for telemetry readings, which the operator may need to use
 to inform command decisions. These systems can use telemetry data to inform sending commands, etc.\ but should still
 never store any state about the system. All state information can be queried from the pad server.
+
+\subsection{Topology}
+
+The current network topology will consist of exactly one pad server node, at least one telemetry client node and, exactly
+one control client node as shown in Figure \ref{fig:ntwrk-tplgy}.
+
+\begin{figure}[H]
+  \center
+  \includegraphics[width=6.75in]{assets/diagrams/network_top.png}
+  \caption{Diagram of the currently planned network topology}
+  \label{fig:ntwrk-tplgy}
+\end{figure}
+
+The telemetry clients and control clients will each be connected via ethernet to a network switch in addition to a Ubiquity Litebeam
+M5 network bridge. These components will make up the control base \gls{lan}
+
+The pad server node will be placed at the hybrid launch pad site. It will be connected directly via an ethernet cable to a Ubiquity
+Litebeam M5 network bridge. The pad server node and the network bridge will make up the launch pad \gls{lan}
+
+The two LANs will be connected wirelessly by the network bridges configured in bridge mode. 
 
 \section{Arming Logic}
 
