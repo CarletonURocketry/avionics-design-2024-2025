@@ -23,6 +23,98 @@ addressed are:
 
 \fxwarning{Add sensor systems design}
 
+\section{Radio Frequency Design}
+
+The radio transmitter portion of the telemetry system will be based on a student-designed \gls{pcb} designed around the
+RN2483 radio transceiver chip. More information about the chip's specifications can be found in Appendix
+\ref{apx:rn483}. You can see the chip featured on the Pictail board in Figure \ref{fig:pictail}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=3in]{assets/images/pictail.jpg}
+    \caption{The RN2483 radio transceiver chip on the commercial Pictail board \cite{pictail-img}}
+    \label{fig:pictail}
+\end{figure}
+
+The RN2483 chip was selected because of its low power consumption of 38.9 milliamps when transmitting \cite[Table
+    2-3]{rn2483-datasheet} and long-range capabilities, transmitting up to a distance of 15 kilometres in suburban
+environments \cite[1]{rn2483-datasheet}. It also has a \gls{cots} twin, the RN2483 Pictail board. This is useful to
+compare our \gls{srad} designs against during range testing.
+
+\subsection{Radio Parameters}
+
+\subsubsection{Frequency}
+
+The RN2483 transceiver will be used to operate on the 433MHz band in our systems. This frequency band was selected
+because it requires a lower transmit power for the same range \cite[Table 2-5]{rn2483-datasheet} as the 868MHz band.
+This band is also licensed as a \gls{ham-radio} band. \Gls{cuinspace} has amateur radio certified members who can
+operate our radio systems and provide their call-sign for use in the transmissions. Our exact frequency is 433.5MHz.
+
+\subsubsection{Modulation}
+
+The RN2483 is capable of both FSK and LoRa modulation, but InSpace will be using LoRa modulation since it provides
+better long-range performance. The modulation technique makes signals less susceptible to noise.
+
+\subsubsection{Spread Factor}
+
+The spread factor determines how much the signal is spread across the frequency band used by the radio. It is possible
+to set spread factors from 7 to 12. \cite[Sec. 2.5.5.14]{rn2483-commands} A lower spread factor increases data rate.
+
+\Gls{cuinspace} uses the lowest spread factor of 7 to maximize the data rate.
+
+\subsection{PCB Design Considerations}
+
+The radio board is designed to be a four layer \gls{pcb}. This allows top and bottom copper signal routing, with ground
+and power planes in the center.
+
+The ground plane will be layer immediately under the top copper, as it provides a reference plane which is beneficial
+for radio frequency traces. The trace will be a microstrip line, which is a copper trace running above a ground plane,
+separated by an impedance controlled dielectric. A visual of microstrip can be seen in Figure \ref{fig:microstrip}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=3in]{assets/images/microstrip.png}
+    \caption{Microstrip line \cite{microstrip}}
+    \label{fig:microstrip}
+\end{figure}
+
+Our radio frequency traces are impedance controlled to 50 ohms, which is a standard impedance for radio equipment,
+including the \gls{sma} connectors and antennas used by \gls{cuinspace}.
+
+All radio frequency traces on the board are also kept below the critical length for the 433MHz frequency, which
+prevents them from acting as an antenna themselves. \Gls{pcb} trace lengths should not exceed 1/12th of the wavelength
+in the dielectric. \cite{critical-length}
+
+Our manufacturer's dielectric constant for the prepreg layer we use on our impedance controlled boards is 4.4.
+\cite{jlc-pcb-impedance}. Equation \ref{eq:wavelength} is used to calculate the wavelength of the radio signal in the
+PCB trace.
+
+\begin{equation}
+    \lambda = \frac{c}{f\sqrt{\epsilon_R}}
+\end{equation} \label{eq:wavelength}
+
+Then, given this wavelength, the critical length is calculated using Equation \ref{eq:critlen}.
+
+\begin{equation}
+    L = \frac{1}{12} \times \lambda
+\end{equation} \label{eq:critlen}
+
+The critical length of the trace for our operating frequency of 433.5MHz is approximately 2.75 centimetres. All of our
+\gls{rf} traces carrying 433.5MHz signals will therefore be designed to have a total length less than 2.75 centimetres.
+
+\begin{gather*}
+    \lambda = \frac{300 \times 10^6}{(433.5 \times 10^6)\sqrt{4.4}} \\
+    \lambda = 0.32991785095003 \\
+    \\
+    L = \frac{1}{12} \times (0.32991785095003) \\
+    L = 0.027493154245836 \\
+    L \approx 0.0275 \\
+\end{gather*}
+
+In addition, our \gls{rf} traces will be designed to have no sharp bends. The RN2483 sample application show traces
+that have two bends with a radius of 2.0 millimetres. \cite[Sec. 5.1]{rn2483-datasheet} If a bend is necessary, the
+design will adhere to this bend radius.
+
 \section{Real-Time Operating System}
 
 The telemetry transmitter will run a \gls{rtos} called Apache NuttX (referred to as NuttX from here onward). NuttX is
@@ -196,10 +288,6 @@ bandwidth. This means that the radio unit is not always able to match the measur
 The on-board data logging is fast enough to capture the full resolution of measured data, but since the radio has low
 bandwidth, it is only used to broadcast the most recently measured packet at the time when it becomes ready for another
 transmission.
-
-\section{Radio Frequency Design}
-
-% TODO: in addition to board design, explain chosen LoRa parameters
 
 \section{Enclosure Design}
 
