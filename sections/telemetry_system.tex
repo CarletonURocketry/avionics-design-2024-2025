@@ -14,12 +14,58 @@ addressed are:
 \end{itemize}
 
 \section{Hardware Design}
+The telemetry system is composed of two \gls{srad} \gls{pcb}s. One \gls{mcu} \gls{pcb} which as well as containing the \gls{mcu} also includes all the sensors and power circuitry essential to making the telemetry system work. The other \gls{srad} \gls{pcb} is the radio board responsible for transmitting information from the rocket to the ground station which is the same \gls{pcb} as the radio board with different features utilized. All of these subsystems are explored in more depth in the following sections.
+
+
+\subsection{Microcontroller Design}
+The \gls{mcu} selected for the system is an STM32H743 series from \gls{stm}, this microcontroller contains an Arm32 core clocked at up to \qty{200}{\mega\hertz} and many \gls{io} options. The \gls{io} from this \gls{mcu} used in this system are summarized in \Cref{tab:mcu-io}. The primary reasons for selecting this \gls{mcu} were: \begin{itemize}
+    \item Low power consumption
+    \item Ample processing power, \gls{sram}, and flash memory
+    \item Excellent power efficiency
+    \item Many \gls{io} options
+    \item NuttX support
+    \item Ease of development
+\end{itemize}
+
+The 
+
+\begin{table}
+    \caption{\gls{mcu} \gls{io} usage}
+    \label{tab:mcu-io}
+    \begin{tabular}{cc}
+        \toprule
+        \textbf{\gls{io} Bus} & \textbf{Used For} \\
+        \midrule
+        I2C1 & \gls{imu} \& Barometer \\
+        I2C2 & \gls{eeprom} \& Temperature \textbackslash Humidity Sensor \\
+        I2C4 & Current Sensor \\
+        UART1 & Radio \\
+        UART2 & \gls{gps} \\
+        UART3 & Debug \\
+        SDMMC1 & microSD Card \\
+        SWD & Debug \\
+        \gls{adc} & Battery Voltage Detection \\
+        \gls{usb} & Programming \& Debug \\
+        \bottomrule
+        
+    \end{tabular}
+\end{table}
+
 
 \subsection{Power System}
+The power system primarily consists of an XC6220A331 3.3V linear voltage regulator to step down the voltage from the 1S 2P (1 series, 2 parallel) pack of 18650 Li-Ion batteries. There is also a TPS2116 power mux \gls{ic} to allow an automatic switching between the batteries and an alternate power source of 5V from the onboard \gls{usb} connector, this connector can also be used with an extension cable to a USB port on the rocket to allow for charging of the batteries while the rocket is fully assembled. There is a connector to an external screw switch on the outside of the rocket to allow for manual arming and disarming of the system. Although this external switch connector only switches the power from the battery, there is a second onboard switch which should be turned to off when in the rocket to avoid powering the flight computer. This architecture is also shown in \Cref{fig:power-system}. Note that the main arming switch is vibration resistant, while the USB switch was not chosen with vibration resistance in mind. This was done to simplify the selection of the \gls{usb} switch. It isn't a problem that this switch could experience some discontinuities during high vibration as the \gls{usb} switch is only used for selecting whether to power the system via USB which will only be done on the ground.
 
-\fxwarning{Add power system and arming design}
+The choice of a linear regulator was primarily made to avoid the noise that a switching regulator would likely introduce into the system. A linear regulator also provides a simpler implementation. Although linear regulators are less efficient than switching regulators the regulator used for this design has an efficiency of ~90\% when in the load range our systems are expected to spend most of their time in. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{assets/diagrams/power_system.png}
+    \caption{Power system architecture}
+    \label{fig:power-system}
+\end{figure}
 
 \subsection{Sensor Systems}
+
 
 \fxwarning{Add sensor systems design}
 
