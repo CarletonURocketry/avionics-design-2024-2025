@@ -279,15 +279,21 @@ little processor time and only have to trigger short bursts of \gls{io} operatio
 \textbf{Task priorities from highest to lowest:}
 
 \begin{enumerate}
-    \item SD card logging
     \item Radio transmission
+    \item SD card logging
     \item Sensor data collection
-    \item Packet encoding
 \end{enumerate}
 
-Packet encoding is the most \gls{cpu} intensive task but is also lowest priority since the \gls{io} operations are
-critical and take very little \gls{cpu} time, so they can afford to be ushered in to quickly trigger an \gls{io}
-operation and relinquish the \gls{cpu}.
+Radio transmission is the slowest of the tasks due to radio bandwidth. It will spend most of its time waiting for
+\gls{io} operations to complete, so it should have the highest priority. This allows it to perform any \gls{cpu} based
+logic quickly and return to blocking, ensuring that the radio operates at its maximum speed.
+
+SD card logging is also \gls{io} intensive, but much quicker in comparison to the radio. It can be prioritized lower
+than the radio task for this reason.
+
+Both SD card logging and radio transmission require data to be available to perform their tasks, and will block
+otherwise. The sensor data collection thread can therefore run at lowest priority, because whenever the supply of data
+is depleted by the radio and logging tasks, it will be given the CPU to produce more data.
 
 The telemetry system will immediately perform boot operations to load all the device drivers before launching into the
 application code at power-on.
