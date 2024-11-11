@@ -15,13 +15,127 @@ addressed are:
 
 \section{Hardware Design}
 
+\subsection{Microcontroller Unit}
+
+The microcontroller unit selected for the telemetry system flight computer is an STM32H743VI. Key specifications are as
+follows:
+
+\begin{itemize}
+    \item Single ARM Cortex M7 up to 480MHz \cite[1]{stm32h743vi}
+    \item 32KB split L1 cache \cite[1]{stm32h743vi}
+    \item 2MB flash memory \cite[1]{stm32h743vi}
+    \item 1MB SRAM \cite[1]{stm32h743vi}
+    \item DFU programming \cite[Sec. 3.4]{stm32h743vi}
+    \item Multiple power domains \cite[1]{stm32h743vi}
+    \item 2.43uA in standby mode \cite[1]{stm32h743vi}
+    \item 275uA/MHz at 3.3V in run mode \cite[1]{stm32h743vi}
+    \item Double precision \gls{fpu} \cite[1]{stm32h743vi}
+\end{itemize}
+
+\Gls{cuinspace} will be under-clocking the \gls{mcu} at 250MHz to further reduce power consumption, as 250MHz is sufficient for our
+application.
+
+\Gls{cuinspace} will be making use of a few of the peripheral interfaces of the \gls{mcu}:
+
+\begin{itemize}
+    \item 3 UART interfaces
+    \item 2 I2C interfaces
+    \item 1 SDMMC/SDIO interface
+    \item 1 USB interface
+\end{itemize}
+
+The STM32H743 was selected for its power efficiency, large number of peripherals and NuttX support. It's single-core
+architecture makes it simple to program, as many of the other \glspl{mcu} in the STM32H7 series have a dual asymmetric
+core architecture. Its DFU bootloader will be leveraged to program the chip over USB, which is a more common interface
+available to \gls{cuinspace} members than ST-Link/JTAG programmers.
+
 \subsection{Power System}
 
 \fxwarning{Add power system and arming design}
 
 \subsection{Sensor Systems}
 
-\fxwarning{Add sensor systems design}
+The sensors on board the flight computer are required to collect information about the rocket's state during flight at
+a high enough resolution to be able to characterize the rocket's flight path after recovering flight logs or when
+receiving telemetry data.
+
+The key pieces of data for a rocket flight are:
+
+\begin{itemize}
+    \item Roll, pitch and yaw
+    \item Acceleration in all 3 axes
+    \item Velocity in all 3 axes
+    \item Altitude
+    \item Position
+\end{itemize}
+
+With this information it is possible to characterize the rocket's flight path and recover the rocket upon landing. This
+information will be logged at a minimum of 10Hz to provide satisfactory resolution of the rocket flight.
+\gls{cuinspace} is designing for a minimum of a 10Hz logging rate, but will aim to maximize logging rate on sensors
+that are capable of updating faster.
+
+\Gls{cuinspace} also wishes to acquire temperature and humidity information at a lower priority to determine the
+temperature levels inside the rocket. Since \gls{sac} typically takes place in the New Mexico desert during summer time,
+it is important to characterize temperatures inside the rocket when evaluating thermals on key components, such as
+voltage regulators. \Gls{cuinspace} aims to avoid the possibility of any overheating components, or components operating
+outside of their nominal temperature range.
+
+In order to acquire the key pieces of data mentioned above, the following sensors will be used:
+
+\begin{itemize}
+    \item Barometric pressure sensor (altitude)
+    \item 3-axis magnetometer (compass heading)
+    \item 3-axis accelerometer (linear acceleration)
+    \item 3-axis gyroscope (angular velocity)
+    \item Temperature and humidity sensor
+    \item GNSS chip (positioning, heading, altitude)
+\end{itemize}
+
+Many of these sensors require calibration and selection of specific operating settings. To accommodate this need, an
+on-board \gls{eeprom} will be used for storing calibration information. This allows multiple boards to be calibrated
+after manufacture so they are ready for flight.
+
+\subsubsection{Barometric Pressure Sensor}
+
+The selected barometric pressure sensor is the MS5607.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=2in]{assets/images/ms5607.jpg}
+    \caption{MS5607 barometric pressure sensor \cite{ms5607-pic}}
+\end{figure}
+
+The M5607 was selected because it provides an \gls{i2c} interface and operates at a 3.3V supply voltage.
+\cite[1]{ms5607-datasheet} It has a resolution of 20 centimetres \cite[1]{ms5607-datasheet} and operates from -40 to 85
+degrees Celsius and 10 to 2000 millibars \cite[1]{ms5607-datasheet}, which is well within the expected temperature and
+pressure ranges.
+
+\subsubsection{Accelerometer \& Gyroscope}
+
+The selected \gls{imu} is the LSM6DSO32, which combines both 3-axis accelerometer and 3-axis gyroscope in one package.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1in]{assets/images/lsm6dso32.jpg}
+    \caption{LSM6DSO32 \gls{imu} \cite{lsm6dso32-pic}}
+\end{figure}
+
+The LSM6DSO32 was selected because it provides and \gls{i2c} interface and operates at our supply voltage of 3.3V.
+\cite{lsm6dso32-datasheet} It also provides a \gls{fsr} of $\pm 32$g \cite[1]{lsm6dso32-datasheet}, which is required
+since the rockets flown by \gls{cuinspace} often experience up to around 25g of acceleration at lift-off.
+
+\subsubsection{Magnetometer}
+
+The selected magnetometer is the LIS2MDL.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1in]{assets/images/lis2mdl.jpg}
+    \caption{LIS2MDL magnetometer \cite{lis2dml-pic}}
+\end{figure}
+
+This magnetometer was selected because it has an \gls{i2c} interface and can be supplied at 3.3V.
+\cite{lsm6dso32-datasheet}
 
 \section{Radio Frequency Design}
 
@@ -31,7 +145,7 @@ RN2483 radio transceiver chip. More information about the chip's specifications 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=3in]{assets/images/pictail.jpg}
+    \includegraphics[width=2.5in]{assets/images/pictail.jpg}
     \caption{The RN2483 radio transceiver chip on the commercial Pictail board \cite{pictail-img}}
     \label{fig:pictail}
 \end{figure}
@@ -165,15 +279,21 @@ little processor time and only have to trigger short bursts of \gls{io} operatio
 \textbf{Task priorities from highest to lowest:}
 
 \begin{enumerate}
-    \item SD card logging
     \item Radio transmission
+    \item SD card logging
     \item Sensor data collection
-    \item Packet encoding
 \end{enumerate}
 
-Packet encoding is the most \gls{cpu} intensive task but is also lowest priority since the \gls{io} operations are
-critical and take very little \gls{cpu} time, so they can afford to be ushered in to quickly trigger an \gls{io}
-operation and relinquish the \gls{cpu}.
+Radio transmission is the slowest of the tasks due to radio bandwidth. It will spend most of its time waiting for
+\gls{io} operations to complete, so it should have the highest priority. This allows it to perform any \gls{cpu} based
+logic quickly and return to blocking, ensuring that the radio operates at its maximum speed.
+
+SD card logging is also \gls{io} intensive, but much quicker in comparison to the radio. It can be prioritized lower
+than the radio task for this reason.
+
+Both SD card logging and radio transmission require data to be available to perform their tasks, and will block
+otherwise. The sensor data collection thread can therefore run at lowest priority, because whenever the supply of data
+is depleted by the radio and logging tasks, it will be given the CPU to produce more data.
 
 The telemetry system will immediately perform boot operations to load all the device drivers before launching into the
 application code at power-on.
