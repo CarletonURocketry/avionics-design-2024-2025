@@ -2,18 +2,33 @@
 
 This year's hybrid control system is a completely new project for avionics with no prior system to inform its design.
 The current working prototype is an Arduino based control system which has been difficult to maintain and use. The
-system was designed using breadboard electronics and it is very difficult to organize the jumper wires or perform
-repairs on the system. It also does not have the ability to detect connection interruptions, the user interface does
-not update at the speed desired for monitoring the system and it has a tendency to crash spuriously. This prototype
-system has sufficed for preliminary testing of the hybrid in cold flows, but must be updated for static fire testing
-and launch.
+system control boxes are pictured in Figure \ref{fig:desk-hybrid} The system was designed using breadboard electronics
+and it is very difficult to organize the jumper wires or perform repairs on the system. It also does not have the
+ability to detect connection interruptions, the user interface does not update at the speed desired for monitoring the
+system and it has a tendency to crash spuriously. This prototype system has sufficed for preliminary testing of the
+hybrid in cold flows (pictured in Figure \ref{fig:cold-flowing}), but must be updated for static fire testing and
+launch.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=3.5in]{assets/images/desk-hybrid.jpg}
+    \caption{The hybrid control system boxes, solenoid plumbing and oxidizer tank}
+    \label{fig:desk-hybrid}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=3.5in]{assets/images/cold-flowing.jpg}
+    \caption{\Gls{cuinspace}'s successful cold flow test from October 23rd, 2024 \cite{yuhan-footage}}
+    \label{fig:cold-flowing}
+\end{figure}
 
 \section{Network Infrastructure}
 
 The hybrid control system will be network based to make use of the robust protocols which already exist for
-communication over a network. The primary components of the network control system are Ubiquiti Litebeam M5 network bridges for
-long range wireless communication, pictured in Figure \ref{fig:ubiquiti-dish}. This avoids the need for Ethernet cabling
-exceeding 2,000 feet, which is inconvenient to set up.
+communication over a network. The primary components of the network control system are Ubiquiti Litebeam M5 network
+bridges for long range wireless communication, pictured in Figure \ref{fig:ubiquiti-dish}. This avoids the need for
+Ethernet cabling exceeding 2,000 feet, which is inconvenient to set up.
 
 \begin{figure}[H]
     \center
@@ -53,7 +68,9 @@ large suite of possible race conditions.
 
 The commands sent from a control client are either arming commands or commands for actuating (turning on or off)
 actuators. Control clients are simple in that they only send these commands to the pad server and wait for a response
-indicating success or failure of the command. An example interaction can be seen in Figure \ref{fig:cntrl-pad-seq}.
+indicating success or failure of the command. \cite{hybrid-comms} An example interaction can be seen in Figure
+\ref{fig:cntrl-pad-seq}. The acknowledgement with the success status of the command is not to be confused with a
+\gls{tcp} ACK.
 
 \begin{figure}[H]
     \center
@@ -67,15 +84,16 @@ and receive indication of success or failure. In this way, all state is maintain
 single source of truth in the system. This makes it impossible for the control client to get out of sync with the real
 system state.
 
-Commands sent from a control client to the pad server are done using \gls{tcp}. \Gls{tcp} was chosen because it is a
-reliable, connection-based protocol, which enables the either end of the connection to detect when the other has
-disconnected. This can be used to determine failures in the control system.
+Commands sent from a control client to the pad server are done using \gls{tcp}. \cite{hybrid-comms} \Gls{tcp} was
+chosen because it is a reliable, connection-based protocol, which enables the either end of the connection to detect
+when the other has disconnected. This can be used to determine failures in the control system's communication channel,
+providing a trigger for the control system to automatically abort if connection cannot be re-established quickly.
 
 \subsubsection{Pad Server}
 
 The pad server is the most complicated of the nodes. The pad server produces all the telemetry data from the system
-sensors, which it sends over \gls{udp} multicast. This design allows a theoretically infinite number of telemetry
-clients to consume telemetry data, while the server only has to perform a single "send" operation.
+sensors, which it sends over \gls{udp} multicast. \cite{hybrid-comms} This design allows a theoretically infinite
+number of telemetry clients to consume telemetry data, while the server only has to perform a single "send" operation.
 
 The pad server simultaneously handles incoming commands from the control client, to which it responds with a success or
 failure acknowledgement. The pad server is responsible for maintaining internal state about the actuators and current
@@ -102,26 +120,28 @@ never store any state about the system. All state information can be queried fro
 
 \subsection{Topology}
 
-The current network topology will consist of exactly one pad server node, at least one telemetry client node and, exactly
-one control client node as shown in Figure \ref{fig:ntwrk-tplgy}.
+The current network topology will consist of exactly one pad server node, at least one telemetry client node and,
+exactly one control client node as shown in Figure \ref{fig:ntwrk-tplgy}.
 
 \begin{figure}[H]
-  \center
-  \includegraphics[width=6.75in]{assets/diagrams/network_top.png}
-  \caption{Diagram of the currently planned network topology}
-  \label{fig:ntwrk-tplgy}
+    \center
+    \includegraphics[width=6.75in]{assets/diagrams/network_top.png}
+    \caption{Diagram of the currently planned network topology}
+    \label{fig:ntwrk-tplgy}
 \end{figure}
 
-The telemetry clients, control client, and a Ubiquiti LiteBeam M5 network bridge will either be connected via Ethernet cable 
-or wirelessly to a router. The router will be configured such that connected devices will be dynamically assigned
-an \gls{ip} address within the range 192.168.1.2 - 192.168.1.49. These components will make up the control base network segment.
+The telemetry clients, control client, and a Ubiquiti LiteBeam M5 network bridge will either be connected via Ethernet
+cable or wirelessly to a router. The router will be configured such that connected devices will be dynamically assigned
+an \gls{ip} address within the range 192.168.1.2 - 192.168.1.49. These components will make up the control base network
+segment.
 
-The pad server node will be placed at the hybrid launch pad site. It will be connected directly via an Ethernet cable to a Ubiquiti
-Litebeam M5 network bridge. The pad server node and the network bridge will make up the launch pad network segment. Should other devices
-require connectivity at the hybrid launch pad site, a router setup similar to that of the control base will be used.
+The pad server node will be placed at the hybrid launch pad site. It will be connected directly via an Ethernet cable
+to a Ubiquiti Litebeam M5 network bridge. The pad server node and the network bridge will make up the launch pad
+network segment. Should other devices require connectivity at the hybrid launch pad site, a router setup similar to
+that of the control base will be used.
 
-The two network segments will be connected wirelessly by the network bridges configured in bridge mode. Only standard configuration is 
-required, as the network bridges inherently support multicast traffic with no additional setup.
+The two network segments will be connected wirelessly by the network bridges configured in bridge mode. Only standard
+configuration is required, as the network bridges inherently support multicast traffic with no additional setup.
 
 \section{Arming Logic}
 
@@ -155,3 +175,80 @@ Privileges are described in the hybrid communication protocol specification in A
 instance, solenoid valves for tank filling and venting can be controlled in the \textit{VALVES ARMED} state and higher.
 \cite{hybrid-comms} Opening the main fire valve (which allows the oxidizer to flow onto the lit igniter) is only
 permitted in the \textit{LAUNCH} state.
+
+\section{Actuators}
+
+All of the actuators on the hybrid control system are binary (on/off), which greatly simplifies controlling code. The
+pad control system application will run on top of a upper-half actuator interface (seen in Listing
+\ref{lst:act-interface}), which provides its own thread synchronization and state management. The driver developers must
+only implement a very simple lower-half driver, such as the example given in Listing \ref{lst:act-lowerhalf}. The
+architecture of the system is described in Figure \ref{fig:pad-architecture}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=2.5in]{assets/diagrams/Pad Actuator Architecture.png}
+    \caption{The actuator architecture on the pad control system}
+    \label{fig:pad-architecture}
+\end{figure}
+
+\begin{lstlisting}[caption={Actuator type definitions}, label={lst:act-interface}, language={C}]
+/* Function for controlling the actuator. */
+typedef int (*actuate_f)(struct actuator *act);
+
+typedef struct {
+    act_id_e id;   /* The unique numeric ID of the actuator */
+    bool state;    /* The actuator state, true being on and false being off*/
+    actuate_f on;  /* Function to turn the actuator on. */
+    actuate_f off; /* Function to turn the actuator off. */
+    pthread_rwlock_t &lock; /* Read/write lock reference */
+    void *priv;    /* Any private information needed by the actuator control functions */
+} actuator_t;
+\end{lstlisting}
+
+This allows driver developers to simply implement two lower-half functions: \texttt{on} and \texttt{off} of type
+\texttt{actuate\_f}. Within these functions, developers have access to the entire actuator struct including their own
+private information which can be stored in the \texttt{void *priv} member. They only need to turn on or off the
+actuator, the management of locks and setting state is done by the upper-half driver as can be seen in Listing
+\ref{lst:act-upperhalf}.
+
+The use of a read/write lock is to allow the telemetry thread to read the actuator state and send that information over
+the network, and also allow the control thread to use the actuator state to inform the state machine or other logic.
+The upper-half driver only locks the write-lock for a very short time to update the state, which makes actuating
+devices an efficient process that does not stall the system.
+
+\begin{lstlisting}[caption={Actuator upper-half implementation example}, label={lst:act-upperhalf}, language={C}]
+int actuator_on(actuator_t *act) {
+    int err = act->on(act);
+    if (!err) {
+        pthread_rwlock_wrlock(act->lock);
+        act->state = true;
+        pthread_rwlock_unlock(act->lock);
+    }
+    return err;
+}
+
+bool actuator_getstate(actuator_t *act) {
+    bool state;
+    pthread_rwlock_rdlock(act->lock);
+    state = act->state;
+    pthread_rwlock_unlock(act->lock);
+    return state;
+}
+\end{lstlisting}
+
+Registering a lower-half implementation looks like the snippet in Listing \ref{lst:act-lowerhalf}. This snippet shows
+an example of actuating a solenoid valve which is connected to the \gls{gpio} interface of the \gls{mcu}.
+
+\begin{lstlisting}[caption={Actuator lower-half implementation example}, label={lst:act-lowerhalf}, language={C}]
+static int solenoid_on(actuator_t *act) {
+    /* Use actuator ID as GPIO number */
+    int err = gpio_set(act->id, GPIO_HIGH);
+    return err;
+}
+
+/* In main application code, the actuator is created like: */
+actuator_t act;
+
+/* Actuator, ID, on, off, priv, read/write lock */
+actuator_init(&act, 0, solenoid_on, solenoid_off, NULL, &lock);
+\end{lstlisting}
