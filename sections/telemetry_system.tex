@@ -137,6 +137,20 @@ The selected magnetometer is the LIS2MDL.
 This magnetometer was selected because it has an \gls{i2c} interface and can be supplied at 3.3V.
 \cite{lsm6dso32-datasheet}
 
+\section{Board Design}
+
+In previous years the \gls{srad} board design was split over a number of boards to decrease coupling in case the
+designs needed to be reworked. These boards included a \gls{mcu} board, a sensor board, a power board, a radio board,
+and a \gls{cots} systems board, and led to the use of a "stack" of boards. This year, because previous designs were so
+simple for the sensor and power boards, \gls{cuinspace} decided to combine these boards with the \gls{mcu} board
+into a single combined design to save space in the rocket and money on board manufacturing costs. The radio board was kept seperate
+because of the frequency with which it is redesigned and so it could be replaced with a \gls{cots} radio board if the
+design \gls{cuinspace} produced did not have the required range, however it could also be incorporated in future years.
+
+The combined \gls{mcu}, sensor, and power board offers one other significant benefit, being its smaller size allowing it to fit
+in smaller rockets for test flights. This would allow testing of the avionics software in-flight before competition flights, which
+normally highlight many integration issues.
+
 \section{Radio Frequency Design}
 
 The radio transmitter portion of the telemetry system will be based on a student-designed \gls{pcb} designed around the
