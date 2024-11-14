@@ -14,6 +14,11 @@
 \usepackage{graphicx} % Include graphics %
 \usepackage{float} % Make sure that figures stay where they're defined %
 
+\usepackage{listings} % Code snippets
+\lstset{basicstyle=\footnotesize\ttfamily,breaklines=true}
+
+\usepackage{tabularx}
+
 % Ensure consistency between displayed PDF title and PDF viewer title %
 \def\doctitle{Carleton University InSpace Avionics Systems Design}
 
@@ -24,9 +29,12 @@
     allbordercolors={0 0 0},
     citebordercolor={1 1 1}, % No border for citations %
     pdfborderstyle={/S/U/W 1},
+    linktoc=all,
 ]{hyperref}
 
 \usepackage[nameinlink]{cleveref} % For hyperlinked references
+
+\usepackage{booktabs} % For nicer tables %
 
 % Document font setup %
 \usepackage{charter}
