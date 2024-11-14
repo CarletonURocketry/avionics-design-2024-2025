@@ -21,7 +21,7 @@ The telemetry system is composed of two \gls{srad} \gls{pcb}s. One \gls{mcu} \gl
 
 
 \subsection{Microcontroller Design}
-The \gls{mcu} selected for the system is an STM32H743 series from \gls{stm}, this microcontroller contains an Arm32 core clocked at up to \qty{200}{\mega\hertz} and many \gls{io} options. The \gls{io} from this \gls{mcu} used in this system are summarized in \Cref{tab:mcu-io}. This is also shown if a more graphical representation in \cref{fig:mcu-diagram}The primary reasons for selecting this \gls{mcu} were: \begin{itemize}
+The \gls{mcu} selected for the system is an STM32H743 series from \gls{stm}, this microcontroller contains an Arm32 core clocked at up to \qty{200}{\mega\hertz} and many \gls{io} options. The \gls{io} from this \gls{mcu} used in this system are summarized in \Cref{tab:mcu-io}. This is also shown if a more graphical representation in \Cref{fig:mcu-diagram}. The primary reasons for selecting this \gls{mcu} were: \begin{itemize}
     \item Low power consumption
     \item Ample processing power, \gls{sram}, and flash memory
     \item Excellent power efficiency
@@ -77,8 +77,7 @@ follows:
     \item Double precision \gls{fpu} \cite[1]{stm32h743vi}
 \end{itemize}
 
-\Gls{cuinspace} will be under-clocking the \gls{mcu} at 250MHz to further reduce power consumption, as 250MHz is sufficient for our
-application.
+\Gls{cuinspace} will be under-clocking the \gls{mcu} to around \qty{250}{\mega\hertz} to further reduce power consumption, as this frequency should be sufficient for our application.
 
 \Gls{cuinspace} will be making use of a few of the peripheral interfaces of the \gls{mcu}:
 
@@ -106,31 +105,27 @@ available to \gls{cuinspace} members than ST-Link/JTAG programmers.
 The selected nominal supply voltage for all components in the telemetry system is 3.3V. This voltage is used for both
 the \gls{mcu} board and the radio transmitter board, which will be supplied from the \gls{mcu} board.
 
-The current draw budgeting for all of the components in the telemetry system can be seen in Table \ref{tbl:draw}.
+The current draw budgeting for all the components in the telemetry system can be seen in \Cref{tbl:draw}.
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{| p{0.8in} | p{0.5in} | p{0.5in} | p{0.5in} | p{0.5in} | p{0.5in} | p{0.5in} |}
-        \hline
-        Component   & Active draw (mA) & Standby draw (mA) & Active (\%) & Standby (\%) & Average (mA) & Max (mA) \\
-        \hline
-        RN2483      & 40.0             & 3.0               & 100         & 0            & 40.0         & 100.0    \\
-        \hline
-        MS5607      & 1.25             & 0.0002            & 10          & 90           & 0.125        & 1.25     \\
-        \hline
-        SHT41       & 0.5              & 0.05              & 10          & 90           & 0.095        & 1        \\
-        \hline
-        L86-M33 GPS & 36.0             & 1                 & 100         & 0            & 36.0         & 100.0    \\
-        \hline
-        SD card     & 50.0             & 1.25              & 60          & 40           & 30.5         & 200.0    \\
-        \hline
-        EEPROM      & 3.0              & 0.001             & 2           & 98           & 0.061        & 3.0      \\
-        \hline
-        MCU         & 34.0             & -                 & 100         & 0            & 24.0         & 100.0    \\
-        \hline
-    \end{tabular}
     \caption{Current draw breakdown for each component in the telemetry system}
     \label{tbl:draw}
+    \begin{tabular}{p{0.8in} p{0.5in} p{0.5in} p{0.5in} p{0.5in} p{0.5in} p{0.5in}}
+        \hline
+        MS5607 & 1.25 & 0.0002 & 10 & 90 & 0.125 & 1.25 \\
+        \hline
+        SHT41 & 0.5 & 0.05 & 10 & 90 & 0.095 & 1 \\
+        \hline
+        L86-M33 GPS & 36.0 & 1 & 100 & 0 & 36.0 & 100.0 \\
+        \hline
+        SD card & 50.0 & 1.25 & 60 & 40 & 30.5 & 200.0 \\
+        \hline
+        EEPROM & 3.0 & 0.001 & 2 & 98 & 0.061 & 3.0 \\
+        \hline
+        MCU & 34.0 & - & 100 & 0 & 24.0 & 100.0 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 
 \subsubsection{Supplies}
@@ -143,48 +138,34 @@ For debugging purposes, power can also be supplied over a USB connection at 5V.
 
 \subsubsection{Power Regulation}
 
-To regulate the voltages from both power supplies, \gls{cuinspace} has selected a \gls{ldo} voltage regulator.
-\gls{ldo} regulators have a lower power efficiency when compared with switching voltage regulators, but they have a
-much lower noise floor. A switching voltage regulator can operate from a few hundred kilohertz to the megahertz
-switching frequency range. Higher frequency noise is easier to filter out for the sensor networks, which are more
-susceptible to low frequency noise, but high frequency noise has an adverse affect on radio signals.
+To regulate the voltages from both power supplies, \gls{cuinspace} has selected a \gls{ldo} voltage regulator. \Gls{ldo} regulators have a lower power efficiency when compared with switching voltage regulators, but they have a much lower noise floor. A switching voltage regulator can operate from a few hundred kilohertz to the megahertz switching frequency range. Higher frequency noise is easier to filter out for the sensor networks, which are more susceptible to low frequency noise, but high frequency noise has an adverse effect on radio signals.
 
 To avoid both issues, a \gls{ldo} regulator sacrifices some efficiency in return for less noise.
 
 \subsection{Sensor Systems}
 
-The sensors on board the flight computer are required to collect information about the rocket's state during flight at
-a high enough resolution to be able to characterize the rocket's flight path after recovering flight logs or when
-receiving telemetry data.
+The sensors on board the flight computer are required to collect information about the rocket's state during flight at a high enough resolution to be able to characterize the rocket's flight path after recovering flight logs or when receiving telemetry data.
 
 The key pieces of data for a rocket flight are:
 
 \begin{itemize}
-    \item Roll, pitch and yaw
+    \item Roll, pitch, and yaw
     \item Acceleration in all 3 axes
     \item Velocity in all 3 axes
     \item Altitude
     \item Position
 \end{itemize}
 
-With this information it is possible to characterize the rocket's flight path and recover the rocket upon landing. This
-information will be logged at a minimum of 10Hz to provide satisfactory resolution of the rocket flight.
-\gls{cuinspace} is designing for a minimum of a 10Hz logging rate, but will aim to maximize logging rate on sensors
-that are capable of updating faster.
+With this information it is possible to characterize the rocket's flight path and recover the rocket upon landing. This information will be logged at a minimum of 10Hz to provide satisfactory resolution of the rocket flight. \gls{cuinspace} is designing for a minimum of a 10Hz logging rate, but will aim to maximize logging rate on sensors that are capable of updating faster.
 
-\Gls{cuinspace} also wishes to acquire temperature and humidity information at a lower priority to determine the
-temperature levels inside the rocket. Since \gls{sac} typically takes place in the New Mexico desert during summer time,
-it is important to characterize temperatures inside the rocket when evaluating thermals on key components, such as
-voltage regulators. \Gls{cuinspace} aims to avoid the possibility of any overheating components, or components operating
-outside of their nominal temperature range.
+\Gls{cuinspace} also wishes to acquire temperature and humidity information at a lower priority to determine the temperature levels inside the rocket. Since \gls{sac} typically takes place in the New Mexico desert during summer, it is important to characterize temperatures inside the rocket when evaluating thermals on components with important thermal considerations, such as voltage regulators. \Gls{cuinspace} aims to avoid the possibility of any overheating components, or components operating outside their nominal temperature range.
 
 In order to acquire the key pieces of data mentioned above, the following sensors will be used:
 
 \begin{itemize}
     \item Barometric pressure sensor (altitude)
     \item 3-axis magnetometer (compass heading)
-    \item 3-axis accelerometer (linear acceleration)
-    \item 3-axis gyroscope (angular velocity)
+    \item 6-axis \acrfull{imu} (linear acceleration) \& (angular velocity)
     \item Temperature and humidity sensor
     \item GNSS chip (positioning, heading, altitude)
 \end{itemize}
@@ -203,10 +184,7 @@ The selected barometric pressure sensor is the MS5607.
     \caption{MS5607 barometric pressure sensor \cite{ms5607-pic}}
 \end{figure}
 
-The M5607 was selected because it provides an \gls{i2c} interface and operates at a 3.3V supply voltage.
-\cite[1]{ms5607-datasheet} It has a resolution of 20 centimetres \cite[1]{ms5607-datasheet} and operates from -40 to 85
-degrees Celsius and 10 to 2000 millibars \cite[1]{ms5607-datasheet}, which is well within the expected temperature and
-pressure ranges.
+The M5607 was selected because it provides an \gls{i2c} interface and operates at a 3.3V supply voltage. \cite[1]{ms5607-datasheet} It has a resolution of 20 centimetres \cite[1]{ms5607-datasheet} and operates from -40 to 85 degrees Celsius and 10 to 2000 millibars \cite[1]{ms5607-datasheet}, which is well within the expected temperature and pressure ranges.
 
 \subsubsection{Accelerometer \& Gyroscope}
 
@@ -218,10 +196,7 @@ The selected \gls{imu} is the LSM6DSO32, which combines both 3-axis acceleromete
     \caption{LSM6DSO32 \gls{imu} \cite{lsm6dso32-pic}}
 \end{figure}
 
-The LSM6DSO32 was selected because it provides and \gls{i2c} interface and operates at our supply voltage of 3.3V.
-\cite{lsm6dso32-datasheet} It also provides a \gls{fsr} of $\pm 32$g \cite[1]{lsm6dso32-datasheet}, which is required
-since the rockets flown by \gls{cuinspace} often experience up to around 25g of acceleration at lift-off. This sensor
-also has a convenient register interface for reading the sensor and interacting with it.
+The LSM6DSO32 was selected because it provides and \gls{i2c} interface and operates at our supply voltage of 3.3V. \cite{lsm6dso32-datasheet} It also provides a \gls{fsr} of $\pm 32$g \cite[1]{lsm6dso32-datasheet}, which is required since the rockets flown by \gls{cuinspace} often experience up to around 25g of acceleration at lift-off. This sensor also has a convenient register interface for reading the sensor and interacting with it.
 
 \subsubsection{Magnetometer}
 
@@ -234,9 +209,7 @@ The selected magnetometer is the LIS2MDL.
     \label{fig:magnetometer}
 \end{figure}
 
-This magnetometer was selected because it has an \gls{i2c} interface and can be supplied at 3.3V.
-\cite{lis2mdl-datasheet} It also has a convenient register interface similar to the LSM6DSO32, which makes it easy for
-\gls{cuinspace} members to user.
+This magnetometer was selected because it has an \gls{i2c} interface and can be supplied at 3.3V. \cite{lis2mdl-datasheet} It also has a convenient register interface similar to the LSM6DSO32, which makes it easy for \gls{cuinspace} members to user.
 
 \subsubsection{GPS/GNSS}
 
@@ -249,12 +222,7 @@ The selected \gls{gps} and \gls{gnss} receiver module is the Quectel L86-M33.
     \label{fig:gps}
 \end{figure}
 
-This \gls{gps} module was selected because it operates at a nominal supply voltage of 3.3V \cite{gps-datasheet} and has
-a \gls{uart} interface for sending \gls{nmea} protocol messages. \cite{gps-datasheet} It allows for the use of either
-its integrated ceramic antenna or an external antenna \cite{gps-datasheet}, provide a backup option if the external
-antenna design has flaws or if the flight computer is used in an enclosed space where an external \gls{gps} antenna
-cannot be used. The module also supports an update frequency of 10 hertz \cite{gps-datasheet}, which meets
-\gls{cuinspace}'s minimum requirements. The unit is also around 50\% cheaper than Ublox branded alternatives.
+This \gls{gps} module was selected because it operates at a nominal supply voltage of 3.3V \cite{gps-datasheet} and has a \gls{uart} interface for sending \gls{nmea} protocol messages. \cite{gps-datasheet} It allows for the use of either its integrated ceramic antenna or an external antenna \cite{gps-datasheet}. This provides a backup option if the external antenna design has flaws or if the flight computer is used in an enclosed space where an external \gls{gps} antenna cannot be used. The module also supports an update frequency of 10 hertz \cite{gps-datasheet}, which meets \gls{cuinspace}'s minimum requirements. The unit is also around 50\% cheaper than Ublox branded alternatives.
 
 \subsubsection{Temperature \& Humidity Sensor}
 
