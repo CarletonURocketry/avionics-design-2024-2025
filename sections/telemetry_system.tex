@@ -61,16 +61,15 @@ graphical representation in \Cref{fig:mcu-diagram}. The primary reasons for sele
     \item Floating point unit
 \end{itemize}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{assets/diagrams/mcu_board.png}
     \caption{STM32H743 \gls{mcu} \gls{io} diagram}
     \label{fig:mcu-diagram}
 \end{figure}
 
-\begin{table}
-    \caption{\gls{mcu} \gls{io} usage}
-    \label{tab:mcu-io}
+\begin{table}[H]
+    \centering
     \begin{tabular}{cc}
         \toprule
         \textbf{\gls{io} Bus} & \textbf{Used For}                                          \\
@@ -87,13 +86,15 @@ graphical representation in \Cref{fig:mcu-diagram}. The primary reasons for sele
         \gls{usb}             & Programming \& Debug                                       \\
         \bottomrule
     \end{tabular}
+    \caption{\gls{mcu} \gls{io} usage}
+    \label{tab:mcu-io}
 \end{table}
 
 \subsection{Power System}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{assets/diagrams/power_system.png}
+    \includegraphics[width=\linewidth]{assets/diagrams/power_system.png}
     \caption{Power system architecture}
     \label{fig:power-system}
 \end{figure}
