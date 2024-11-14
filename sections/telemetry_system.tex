@@ -312,6 +312,34 @@ is depleted by the radio and logging tasks, it will be given the CPU to produce 
 The telemetry system will immediately perform boot operations to load all the device drivers before launching into the
 application code at power-on.
 
+\section{Data Buffers}
+
+Previously, data was passed between the sensor data collection thread and the radio transmission and SD card logging processes
+using \gls{posix} message queues. This reduced coupling between processes but performed unnecessary copies on collected data.
+Conveniently, because of NuttX's flat architecture, threads have similar characteristics as kernel-level threads and data
+can easily be shared between them. \cite{nuttx-pthread} This opens up the option of using a single shared data structure to recieve data and hold it while it
+is being logged or transmitted.
+
+There are a number of design considerations in choosing such a data strcture, which are as follows.
+
+\begin{itemize}
+    \item Data should be placed into the buffer in single units as soon as it is collected and consumed in large blocks to make efficient use of \gls{io}
+    \item In a full buffer, the oldest or most used measurements should be overwritten first before new or unused data
+    \item Consumers should read the most recent information first
+    \item There should be little to no overhead or locks to consumers getting access to new data
+\end{itemize}
+
+It is possible to meet these requirements using a structure similar to a double-ended queue containing buffers the size of a packet.
+A producer will write to a reserved buffer until it is full, then place the reserved buffer on the front of the queue, at the same time removing
+the oldest buffer that was used by the maximum number of consumers to use for writing. Consumers will retrieve the newest (first) buffer on the queue they have not used yet,
+then use the buffer directly to send data to the radio or write to the file system. This design uses \gls{posix} read/write locks for each buffer and
+the queue itself and only blocks threads for extremely short amounts of time and when it is conceptually important to do so anyways.
+
+Additionally, as long as the total number of buffers used is greater than the number of producers and consumers, there will always be space
+for writing and another packet that is ready to be written to. This means the producer will never have to block to wait for free space
+or for a consumer to release its buffer while still allowing at least one packet of ready data to be waiting at all times.
+
+
 \section{Data Delivery}
 
 Data logging during flight will be done in a significantly more robust manner than previous years. This involves more
