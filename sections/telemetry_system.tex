@@ -409,12 +409,31 @@ flight.
 
 In order to transmit telemetry data over radio, \gls{cuinspace} has developed a radio packet encoding format. This
 format can be found in Appendix \ref{apx:comm-spec-repos}. The format covers multiple different data types that are
-recorded about the rocket state, such as altitude, acceleration, \gls{gps} coordinates, etc. \cite{radio-comms}.
+recorded about the rocket state like altitude, acceleration, or \gls{gps} coordinates. \cite{radio-comms}
 Importantly, each radio packet starts with a header containing the amateur radio call-sign of the \gls{cuinspace}
 operator responsible for flying the system. \cite{radio-comms} The original specification did not include sufficient
 space to append a call-zone indicator to the call-sign, which has since been amended in the latest version. This is a
 requirement for Canadians broadcasting in the United States \cite{foreign-broadcast}, as \gls{cuinspace} does at
-\gls{sac}.
+\gls{sac}. \gls{cuinspace} plans on using this same packet encoding in its data logging for consistency and compatability
+with existing tools.
+
+The radio packet encoding format also had changes this year to increase the amount of useful data sent over the radio by
+cutting out as much duplicated or unnecessary information from the packet header and individual measurements (which are
+stored in "blocks" in the packet) as possible. These changes are listed below.
+
+\start{itemize}
+    \item Removal of a version field for packet headers, as the team has not supported older versions of the specification in the past
+    \item Updating the packet length field in the packet header to count the number of blocks instead of number of bytes
+    \item Using a rolling sequence number instead of the total number of packets sent so far as the field was only useful for identifying if packets were lost
+    \item Instead of transmitting absolute times with each measurement, storing an imprecise absolute time in the packet header and small precise offsets from this time for each measurement
+    \item Removing fields for identification of the sender and intended recipient, since there has never been more than one of each
+    \item Removing the ability to have more than 256 types of blocks or variable length blocks
+\end{itemize}
+
+These changes have increased the amount of actual data sent in a single packet by almost four times. There is also consideration in
+using a simple compression algorithm like LZ77, which is similar to a simple copy loop and is a universal coding scheme, allowing \gls{cuinspace}
+to employ one of the many existing open-source implementations without any additional work. \cite{lz77-paper} These open-source implementations typically claim
+compression of around 40\% and very low processing time. \cite{liblzf}
 
 Since \gls{cuinspace}'s rockets achieve altitudes up to around 9 kilometres, it is necessary to choose a radio unit
 that can transmit up to such a long range. Unfortunately, long range transmissions are achieved with a trade-off in
