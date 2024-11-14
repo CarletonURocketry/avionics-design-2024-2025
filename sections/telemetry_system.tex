@@ -259,6 +259,10 @@ external antenna design has flaws or if the flight computer is used in an enclos
 antenna cannot be used. The module also supports an update frequency of 10 hertz \cite{gps-datasheet}, which meets
 \gls{cuinspace}'s minimum requirements. The unit is also around 50\% cheaper than Ublox branded alternatives.
 
+The \gls{gps} operates within \gls{itar} limits, which means we will lose \gls{gps} data when we exceed 4g of force or
+a velocity of 515 metres per second (Mach 1.51). The maximum operating altitude is 18 kilometres, which is far above our
+\gls{apogee}.
+
 \subsubsection{Temperature \& Humidity Sensor}
 
 The selected temperature and humidity sensor is the Sensirion SHT41.
