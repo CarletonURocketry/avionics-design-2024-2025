@@ -17,50 +17,14 @@ addressed are:
 \end{itemize}
 
 \section{Hardware Design}
-The telemetry system is composed of two \gls{srad} \gls{pcb}s. One \gls{mcu} \gls{pcb} which as well as containing the \gls{mcu} also includes all the sensors and power circuitry essential to making the telemetry system work. The other \gls{srad} \gls{pcb} is the radio board responsible for transmitting information from the rocket to the ground station which is the same \gls{pcb} as the radio board with different features utilized. All of these subsystems are explored in more depth in the following sections.
 
+The telemetry system is composed of two \gls{srad} \gls{pcb}s. One \gls{mcu} \gls{pcb} which as well as containing the
+\gls{mcu} also includes all the sensors and power circuitry essential to making the telemetry system work. The other
+\gls{srad} \gls{pcb} is the radio board responsible for transmitting information from the rocket to the ground station
+which is the same \gls{pcb} as the radio board with different features utilized. All of these subsystems are explored
+in more depth in the following sections.
 
-\subsection{Microcontroller Design}
-The \gls{mcu} selected for the system is an STM32H743 series from \gls{stm}, this microcontroller contains an Arm32 core clocked at up to \qty{200}{\mega\hertz} and many \gls{io} options. The \gls{io} from this \gls{mcu} used in this system are summarized in \Cref{tab:mcu-io}. This is also shown if a more graphical representation in \Cref{fig:mcu-diagram}. The primary reasons for selecting this \gls{mcu} were: \begin{itemize}
-    \item Low power consumption
-    \item Ample processing power, \gls{sram}, and flash memory
-    \item Excellent power efficiency
-    \item Many \gls{io} options
-    \item NuttX support
-    \item Ease of development
-\end{itemize}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{assets/diagrams/mcu_board.png}
-    \caption{STM32H743 \gls{mcu} \gls{io} diagram}
-    \label{fig:mcu-diagram}
-\end{figure}
-
-\begin{table}
-    \caption{\gls{mcu} \gls{io} usage}
-    \label{tab:mcu-io}
-    \begin{tabular}{cc}
-        \toprule
-        \textbf{\gls{io} Bus} & \textbf{Used For} \\
-        \midrule
-        I2C1 & \gls{imu} \& Barometer \\
-        I2C2 & \gls{eeprom} \& Temperature \textbackslash Humidity Sensor \\
-        I2C4 & Current Sensor \\
-        UART1 & Radio \\
-        UART2 & \gls{gps} \\
-        UART3 & Debug \\
-        SDMMC1 & microSD Card \\
-        SWD & Debug \\
-        \gls{adc} & Battery Voltage Detection \\
-        \gls{usb} & Programming \& Debug \\
-        \bottomrule
-        
-    \end{tabular}
-\end{table}
-
-
-\subsection{Microcontroller Unit}
+\subsection{Microcontroller Unit Selection}
 
 The microcontroller unit selected for the telemetry system flight computer is an STM32H743VI. Key specifications are as
 follows:
@@ -79,19 +43,51 @@ follows:
 
 \Gls{cuinspace} will be under-clocking the \gls{mcu} to around \qty{250}{\mega\hertz} to further reduce power consumption, as this frequency should be sufficient for our application.
 
-\Gls{cuinspace} will be making use of a few of the peripheral interfaces of the \gls{mcu}:
-
-\begin{itemize}
-    \item 3 UART interfaces
-    \item 2 I2C interfaces
-    \item 1 SDMMC/SDIO interface
-    \item 1 USB interface
-\end{itemize}
-
 The STM32H743 was selected for its power efficiency, large number of peripherals and NuttX support. It's single-core
 architecture makes it simple to program, as many of the other \glspl{mcu} in the STM32H7 series have a dual asymmetric
 core architecture. Its DFU bootloader will be leveraged to program the chip over USB, which is a more common interface
 available to \gls{cuinspace} members than ST-Link/JTAG programmers.
+
+The \gls{io} from this \gls{mcu} used in this system are summarized in \Cref{tab:mcu-io}. This is also shown in
+graphical representation in \Cref{fig:mcu-diagram}. The primary reasons for selecting this \gls{mcu} were:
+
+\begin{itemize}
+    \item Low power consumption
+    \item Ample processing power, \gls{sram}, and flash memory
+    \item Excellent power efficiency
+    \item Many \gls{io} options
+    \item NuttX support
+    \item Ease of development
+    \item Floating point unit
+\end{itemize}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{assets/diagrams/mcu_board.png}
+    \caption{STM32H743 \gls{mcu} \gls{io} diagram}
+    \label{fig:mcu-diagram}
+\end{figure}
+
+\begin{table}
+    \caption{\gls{mcu} \gls{io} usage}
+    \label{tab:mcu-io}
+    \begin{tabular}{cc}
+        \toprule
+        \textbf{\gls{io} Bus} & \textbf{Used For}                                          \\
+        \midrule
+        I2C1                  & \gls{imu} \& Barometer                                     \\
+        I2C2                  & \gls{eeprom} \& Temperature \textbackslash Humidity Sensor \\
+        I2C4                  & Current Sensor                                             \\
+        UART1                 & Radio                                                      \\
+        UART2                 & \gls{gps}                                                  \\
+        UART3                 & Debug                                                      \\
+        SDMMC1                & MicroSD Card                                               \\
+        SWD                   & Debug                                                      \\
+        \gls{adc}             & Battery Voltage Detection                                  \\
+        \gls{usb}             & Programming \& Debug                                       \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
 \subsection{Power System}
 
@@ -113,17 +109,17 @@ The current draw budgeting for all the components in the telemetry system can be
     \label{tbl:draw}
     \begin{tabular}{p{0.8in} p{0.5in} p{0.5in} p{0.5in} p{0.5in} p{0.5in} p{0.5in}}
         \hline
-        MS5607 & 1.25 & 0.0002 & 10 & 90 & 0.125 & 1.25 \\
+        MS5607      & 1.25 & 0.0002 & 10  & 90 & 0.125 & 1.25  \\
         \hline
-        SHT41 & 0.5 & 0.05 & 10 & 90 & 0.095 & 1 \\
+        SHT41       & 0.5  & 0.05   & 10  & 90 & 0.095 & 1     \\
         \hline
-        L86-M33 GPS & 36.0 & 1 & 100 & 0 & 36.0 & 100.0 \\
+        L86-M33 GPS & 36.0 & 1      & 100 & 0  & 36.0  & 100.0 \\
         \hline
-        SD card & 50.0 & 1.25 & 60 & 40 & 30.5 & 200.0 \\
+        SD card     & 50.0 & 1.25   & 60  & 40 & 30.5  & 200.0 \\
         \hline
-        EEPROM & 3.0 & 0.001 & 2 & 98 & 0.061 & 3.0 \\
+        EEPROM      & 3.0  & 0.001  & 2   & 98 & 0.061 & 3.0   \\
         \hline
-        MCU & 34.0 & - & 100 & 0 & 24.0 & 100.0 \\
+        MCU         & 34.0 & -      & 100 & 0  & 24.0  & 100.0 \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -138,13 +134,19 @@ For debugging purposes, power can also be supplied over a USB connection at 5V.
 
 \subsubsection{Power Regulation}
 
-To regulate the voltages from both power supplies, \gls{cuinspace} has selected a \gls{ldo} voltage regulator. \Gls{ldo} regulators have a lower power efficiency when compared with switching voltage regulators, but they have a much lower noise floor. A switching voltage regulator can operate from a few hundred kilohertz to the megahertz switching frequency range. Higher frequency noise is easier to filter out for the sensor networks, which are more susceptible to low frequency noise, but high frequency noise has an adverse effect on radio signals.
+To regulate the voltages from both power supplies, \gls{cuinspace} has selected a \gls{ldo} voltage regulator.
+\Gls{ldo} regulators have a lower power efficiency when compared with switching voltage regulators, but they have a
+much lower noise floor. A switching voltage regulator can operate from a few hundred kilohertz to the megahertz
+switching frequency range. Higher frequency noise is easier to filter out for the sensor networks, which are more
+susceptible to low frequency noise, but high frequency noise has an adverse effect on radio signals.
 
 To avoid both issues, a \gls{ldo} regulator sacrifices some efficiency in return for less noise.
 
 \subsection{Sensor Systems}
 
-The sensors on board the flight computer are required to collect information about the rocket's state during flight at a high enough resolution to be able to characterize the rocket's flight path after recovering flight logs or when receiving telemetry data.
+The sensors on board the flight computer are required to collect information about the rocket's state during flight at
+a high enough resolution to be able to characterize the rocket's flight path after recovering flight logs or when
+receiving telemetry data.
 
 The key pieces of data for a rocket flight are:
 
@@ -156,7 +158,10 @@ The key pieces of data for a rocket flight are:
     \item Position
 \end{itemize}
 
-With this information it is possible to characterize the rocket's flight path and recover the rocket upon landing. This information will be logged at a minimum of 10Hz to provide satisfactory resolution of the rocket flight. \gls{cuinspace} is designing for a minimum of a 10Hz logging rate, but will aim to maximize logging rate on sensors that are capable of updating faster.
+With this information it is possible to characterize the rocket's flight path and recover the rocket upon landing. This
+information will be logged at a minimum of 10Hz to provide satisfactory resolution of the rocket flight.
+\gls{cuinspace} is designing for a minimum of a 10Hz logging rate, but will aim to maximize logging rate on sensors
+that are capable of updating faster.
 
 \Gls{cuinspace} also wishes to acquire temperature and humidity information at a lower priority to determine the temperature levels inside the rocket. Since \gls{sac} typically takes place in the New Mexico desert during summer, it is important to characterize temperatures inside the rocket when evaluating thermals on components with important thermal considerations, such as voltage regulators. \Gls{cuinspace} aims to avoid the possibility of any overheating components, or components operating outside their nominal temperature range.
 
@@ -184,7 +189,10 @@ The selected barometric pressure sensor is the MS5607.
     \caption{MS5607 barometric pressure sensor \cite{ms5607-pic}}
 \end{figure}
 
-The M5607 was selected because it provides an \gls{i2c} interface and operates at a 3.3V supply voltage. \cite[1]{ms5607-datasheet} It has a resolution of 20 centimetres \cite[1]{ms5607-datasheet} and operates from -40 to 85 degrees Celsius and 10 to 2000 millibars \cite[1]{ms5607-datasheet}, which is well within the expected temperature and pressure ranges.
+The M5607 was selected because it provides an \gls{i2c} interface and operates at a 3.3V supply voltage.
+\cite[1]{ms5607-datasheet} It has a resolution of 20 centimetres \cite[1]{ms5607-datasheet} and operates from -40 to 85
+degrees Celsius and 10 to 2000 millibars \cite[1]{ms5607-datasheet}, which is well within the expected temperature and
+pressure ranges.
 
 \subsubsection{Accelerometer \& Gyroscope}
 
@@ -196,7 +204,10 @@ The selected \gls{imu} is the LSM6DSO32, which combines both 3-axis acceleromete
     \caption{LSM6DSO32 \gls{imu} \cite{lsm6dso32-pic}}
 \end{figure}
 
-The LSM6DSO32 was selected because it provides and \gls{i2c} interface and operates at our supply voltage of 3.3V. \cite{lsm6dso32-datasheet} It also provides a \gls{fsr} of $\pm 32$g \cite[1]{lsm6dso32-datasheet}, which is required since the rockets flown by \gls{cuinspace} often experience up to around 25g of acceleration at lift-off. This sensor also has a convenient register interface for reading the sensor and interacting with it.
+The LSM6DSO32 was selected because it provides and \gls{i2c} interface and operates at our supply voltage of 3.3V.
+\cite{lsm6dso32-datasheet} It also provides a \gls{fsr} of $\pm 32$g \cite[1]{lsm6dso32-datasheet}, which is required
+since the rockets flown by \gls{cuinspace} often experience up to around 25g of acceleration at lift-off. This sensor
+also has a convenient register interface for reading the sensor and interacting with it.
 
 \subsubsection{Magnetometer}
 
@@ -209,7 +220,9 @@ The selected magnetometer is the LIS2MDL.
     \label{fig:magnetometer}
 \end{figure}
 
-This magnetometer was selected because it has an \gls{i2c} interface and can be supplied at 3.3V. \cite{lis2mdl-datasheet} It also has a convenient register interface similar to the LSM6DSO32, which makes it easy for \gls{cuinspace} members to user.
+This magnetometer was selected because it has an \gls{i2c} interface and can be supplied at 3.3V.
+\cite{lis2mdl-datasheet} It also has a convenient register interface similar to the LSM6DSO32, which makes it easy for
+\gls{cuinspace} members to user.
 
 \subsubsection{GPS/GNSS}
 
@@ -222,7 +235,12 @@ The selected \gls{gps} and \gls{gnss} receiver module is the Quectel L86-M33.
     \label{fig:gps}
 \end{figure}
 
-This \gls{gps} module was selected because it operates at a nominal supply voltage of 3.3V \cite{gps-datasheet} and has a \gls{uart} interface for sending \gls{nmea} protocol messages. \cite{gps-datasheet} It allows for the use of either its integrated ceramic antenna or an external antenna \cite{gps-datasheet}. This provides a backup option if the external antenna design has flaws or if the flight computer is used in an enclosed space where an external \gls{gps} antenna cannot be used. The module also supports an update frequency of 10 hertz \cite{gps-datasheet}, which meets \gls{cuinspace}'s minimum requirements. The unit is also around 50\% cheaper than Ublox branded alternatives.
+This \gls{gps} module was selected because it operates at a nominal supply voltage of 3.3V \cite{gps-datasheet} and has
+a \gls{uart} interface for sending \gls{nmea} protocol messages. \cite{gps-datasheet} It allows for the use of either
+its integrated ceramic antenna or an external antenna \cite{gps-datasheet}. This provides a backup option if the
+external antenna design has flaws or if the flight computer is used in an enclosed space where an external \gls{gps}
+antenna cannot be used. The module also supports an update frequency of 10 hertz \cite{gps-datasheet}, which meets
+\gls{cuinspace}'s minimum requirements. The unit is also around 50\% cheaper than Ublox branded alternatives.
 
 \subsubsection{Temperature \& Humidity Sensor}
 
