@@ -456,7 +456,7 @@ cutting out as much duplicated or unnecessary information from the packet header
 stored in "blocks" in the packet) as possible. These changes are listed below.
 
 \start{itemize}
-    \item Removal of a version field for packet headers, as the team has not supported older versions of the
+    \item Removal of a version field for packet headers, as the team has not supported multiple versions of the
           specification in the past
     \item Updating the packet length field in the packet header to count the number of blocks instead of number of bytes
     \item Using a rolling sequence number instead of the total number of packets sent so far as the field was only
@@ -465,7 +465,9 @@ stored in "blocks" in the packet) as possible. These changes are listed below.
           header and small precise offsets from this time for each measurement
     \item Removing fields for identification of the sender and intended recipient, since there has never been more than
           one of each
-    \item Removing the ability to have more than 256 types of blocks or variable length blocks
+    \item Removing the ability to have more than 256 types of blocks
+    \item Removed block length information from each block, instead blocks are always a fixed length which can be inferred
+          from their type
 \end{itemize}
 
 These changes have increased the amount of actual data sent in a single packet by almost four times. There is also
