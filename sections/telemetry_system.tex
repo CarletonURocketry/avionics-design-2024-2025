@@ -18,11 +18,27 @@ addressed are:
 
 \section{Hardware Design}
 
+\subsection{Board Design}
+
 The telemetry system is composed of two \gls{srad} \gls{pcb}s. One \gls{mcu} \gls{pcb} which as well as containing the
 \gls{mcu} also includes all the sensors and power circuitry essential to making the telemetry system work. The other
-\gls{srad} \gls{pcb} is the radio board responsible for transmitting information from the rocket to the ground station
-which is the same \gls{pcb} as the radio board with different features utilized. All of these subsystems are explored
-in more depth in the following sections.
+\gls{srad} \gls{pcb} is the radio board which transmits information from the rocket to the ground station. The ground 
+station uses the same radio board but different features. All of these subsystems are explored in more depth in the 
+following sections.
+
+In previous years the \gls{srad} board design was split over a number of \glspl{pcb} to decrease coupling in case the
+designs needed to be reworked. These \glspl{pcb} included a \gls{mcu} board, a sensor board, a radio board,
+and a \gls{cots} systems board, and led to the visual appearance of a "stack" of boards. This year, because previous
+designs were so simple for the sensor board, \gls{cuinspace} decided to combine the sensor board with the \gls{mcu} board
+into a single design to save space in the rocket and money on board manufacturing costs. The radio board was kept 
+seperate because of how often it has been redesigned in the past and so it could be replaced with a \gls{cots} radio
+board if the design \gls{cuinspace} produced did not have the required range. In future years the radio board could also
+be incorporated into the \gls{mcu} and sensor board.
+
+The combined \gls{mcu} and sensor board offers one other significant benefit. Its smaller size allows it to fit in
+smaller rockets like those launched by team members for rocketry certification flights, meaning the telemetry system
+could be flight-tested. This has not been possible in previous years and would be very useful for identifying software
+and hardware issues before competitions.
 
 \subsection{Microcontroller Unit Selection}
 
@@ -361,7 +377,7 @@ design will adhere to this bend radius.
 
 The telemetry transmitter will run a \gls{rtos} called Apache NuttX (referred to as NuttX from here onward). NuttX is
 an embedded \gls{rtos} which is designed to have an incredibly small footprint through its many configuration options.
-\cite{nuttx-about}. It is \gls{posix} compliant and also adheres to several other standards in the embedded systems
+\cite{nuttx-about} It is \gls{posix} compliant and also adheres to several other standards in the embedded systems
 space for APIs that are not governed by \gls{posix}. \cite{nuttx-about} It's completely open source under the Apache
 2.0 license and provides a host of existing tools and drivers for file systems, memory devices, analog devices and
 digital sensors/peripherals. NuttX has an open community forum for getting support and reporting bugs, which has been
@@ -425,6 +441,38 @@ is depleted by the radio and logging tasks, it will be given the CPU to produce 
 
 The telemetry system will immediately perform boot operations to load all the device drivers before launching into the
 application code at power-on.
+
+\section{Data Buffers}
+
+Previously, data was passed between the sensor data collection thread and the radio transmission and SD card logging
+processes using \gls{posix} message queues. This reduced coupling between processes but performed unnecessary copies on
+collected data.  Conveniently, because of NuttX's flat architecture, threads have similar characteristics as kernel-level
+threads and data can easily be shared between them. \cite{nuttx-pthread} This opens up the option of using a single shared
+data structure to recieve data and hold it while it is being logged or transmitted.
+
+There are a number of design considerations in choosing such a data strcture, which are as follows.
+
+\begin{itemize}
+    \item Data should be placed into the buffer in single units as soon as it is collected and consumed in large blocks to
+          make efficient use of \gls{io}
+    \item In a full buffer, the oldest or most used measurements should be overwritten first before new or unused data
+    \item Consumers should read the most recent information first
+    \item There should be little to no overhead or locks to consumers getting access to new data
+\end{itemize}
+
+It is possible to meet these requirements using a structure similar to a double-ended queue containing buffers the size
+of a packet. A producer will write to a reserved buffer until it is full, then place the reserved buffer on the front of the
+queue, at the same time removing the oldest buffer that was used by the maximum number of consumers to use for writing.
+Consumers will retrieve the newest (first) buffer on the queue they have not used yet, then use the buffer directly to
+send data to the radio or write to the file system. This design uses \gls{posix} read/write locks for each buffer and
+the queue itself and only blocks threads for extremely short amounts of time and when it is conceptually important to do
+so anyways.
+
+Additionally, as long as the total number of buffers used is greater than the number of producers and consumers, there
+will always be space for writing and another packet that is ready to be written to. This means the producer will never
+have to block to wait for free space or for a consumer to release its buffer while still allowing at least one packet of
+ready data to be waiting at all times.
+
 
 \section{Data Delivery}
 
@@ -523,12 +571,38 @@ flight.
 
 In order to transmit telemetry data over radio, \gls{cuinspace} has developed a radio packet encoding format. This
 format can be found in Appendix \ref{apx:comm-spec-repos}. The format covers multiple different data types that are
-recorded about the rocket state, such as altitude, acceleration, \gls{gps} coordinates, etc. \cite{radio-comms}.
+recorded about the rocket state like altitude, acceleration, or \gls{gps} coordinates. \cite{radio-comms}
 Importantly, each radio packet starts with a header containing the amateur radio call-sign of the \gls{cuinspace}
 operator responsible for flying the system. \cite{radio-comms} The original specification did not include sufficient
 space to append a call-zone indicator to the call-sign, which has since been amended in the latest version. This is a
 requirement for Canadians broadcasting in the United States \cite{foreign-broadcast}, as \gls{cuinspace} does at
-\gls{sac}.
+\gls{sac}. \gls{cuinspace} plans on using this same packet encoding in its data logging (minus the call-sign in the header)
+for consistency and compatability with existing tools.
+
+The radio packet encoding format also had changes this year to increase the amount of useful data sent over the radio by
+cutting out as much duplicated or unnecessary information from the packet header and individual measurements (which are
+stored in "blocks" in the packet) as possible. These changes are listed below.
+
+\start{itemize}
+    \item Removal of a version field for packet headers, as the team has not supported multiple versions of the
+          specification in the past
+    \item Updating the packet length field in the packet header to count the number of blocks instead of number of bytes
+    \item Using a rolling sequence number instead of the total number of packets sent so far as the field was only
+          useful for identifying if packets were lost
+    \item Instead of transmitting absolute times with each measurement, storing an imprecise absolute time in the packet
+          header and small precise offsets from this time for each measurement
+    \item Removing fields for identification of the sender and intended recipient, since there has never been more than
+          one of each
+    \item Removing the ability to have more than 256 types of blocks
+    \item Removed block length information from each block, instead blocks are always a fixed length which can be inferred
+          from their type
+\end{itemize}
+
+These changes have increased the amount of actual data sent in a single packet by almost four times. There is also
+consideration in using a simple compression algorithm like LZ77, which is similar to a simple copy loop and is a universal
+coding scheme, allowing \gls{cuinspace} to employ one of the many existing open-source implementations without any
+additional work. \cite{lz77-paper} These open-source implementations typically claim compression of around 40\% and very
+low compression time. \cite{liblzf}
 
 Since \gls{cuinspace}'s rockets achieve altitudes up to around 9 kilometres, it is necessary to choose a radio unit
 that can transmit up to such a long range. Unfortunately, long range transmissions are achieved with a trade-off in
