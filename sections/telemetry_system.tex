@@ -143,9 +143,10 @@ In previous years the \gls{srad} board design was split over a number of boards 
 designs needed to be reworked. These boards included a \gls{mcu} board, a sensor board, a power board, a radio board,
 and a \gls{cots} systems board, and led to the use of a "stack" of boards. This year, because previous designs were so
 simple for the sensor and power boards, \gls{cuinspace} decided to combine these boards with the \gls{mcu} board
-into a single combined design to save space in the rocket and money on board manufacturing costs. The radio board was kept seperate
-because of the frequency with which it is redesigned and so it could be replaced with a \gls{cots} radio board if the
-design \gls{cuinspace} produced did not have the required range, however it could also be incorporated in future years.
+into a single combined design to save space in the rocket and money on board manufacturing costs. The radio board was
+kept seperate because of the frequency with which it is redesigned and so it could be replaced with a \gls{cots} radio
+board if the design \gls{cuinspace} produced did not have the required range, however it could also be incorporated in
+future years.
 
 The combined \gls{mcu}, sensor, and power board offers one other significant benefit, being its smaller size allowing it to fit
 in smaller rockets for test flights. This would allow testing of the avionics software in-flight which has not been possible in
@@ -314,30 +315,34 @@ application code at power-on.
 
 \section{Data Buffers}
 
-Previously, data was passed between the sensor data collection thread and the radio transmission and SD card logging processes
-using \gls{posix} message queues. This reduced coupling between processes but performed unnecessary copies on collected data.
-Conveniently, because of NuttX's flat architecture, threads have similar characteristics as kernel-level threads and data
-can easily be shared between them. \cite{nuttx-pthread} This opens up the option of using a single shared data structure to recieve data and hold it while it
-is being logged or transmitted.
+Previously, data was passed between the sensor data collection thread and the radio transmission and SD card logging
+processes using \gls{posix} message queues. This reduced coupling between processes but performed unnecessary copies on
+collected data.  Conveniently, because of NuttX's flat architecture, threads have similar characteristics as kernel-level
+threads and data can easily be shared between them. \cite{nuttx-pthread} This opens up the option of using a single shared
+data structure to recieve data and hold it while it is being logged or transmitted.
 
 There are a number of design considerations in choosing such a data strcture, which are as follows.
 
 \begin{itemize}
-    \item Data should be placed into the buffer in single units as soon as it is collected and consumed in large blocks to make efficient use of \gls{io}
+    \item Data should be placed into the buffer in single units as soon as it is collected and consumed in large blocks to
+          make efficient use of \gls{io}
     \item In a full buffer, the oldest or most used measurements should be overwritten first before new or unused data
     \item Consumers should read the most recent information first
     \item There should be little to no overhead or locks to consumers getting access to new data
 \end{itemize}
 
-It is possible to meet these requirements using a structure similar to a double-ended queue containing buffers the size of a packet.
-A producer will write to a reserved buffer until it is full, then place the reserved buffer on the front of the queue, at the same time removing
-the oldest buffer that was used by the maximum number of consumers to use for writing. Consumers will retrieve the newest (first) buffer on the queue they have not used yet,
-then use the buffer directly to send data to the radio or write to the file system. This design uses \gls{posix} read/write locks for each buffer and
-the queue itself and only blocks threads for extremely short amounts of time and when it is conceptually important to do so anyways.
+It is possible to meet these requirements using a structure similar to a double-ended queue containing buffers the size
+of a packet. A producer will write to a reserved buffer until it is full, then place the reserved buffer on the front of the
+queue, at the same time removing the oldest buffer that was used by the maximum number of consumers to use for writing.
+Consumers will retrieve the newest (first) buffer on the queue they have not used yet, then use the buffer directly to
+send data to the radio or write to the file system. This design uses \gls{posix} read/write locks for each buffer and
+the queue itself and only blocks threads for extremely short amounts of time and when it is conceptually important to do
+so anyways.
 
-Additionally, as long as the total number of buffers used is greater than the number of producers and consumers, there will always be space
-for writing and another packet that is ready to be written to. This means the producer will never have to block to wait for free space
-or for a consumer to release its buffer while still allowing at least one packet of ready data to be waiting at all times.
+Additionally, as long as the total number of buffers used is greater than the number of producers and consumers, there
+will always be space for writing and another packet that is ready to be written to. This means the producer will never
+have to block to wait for free space or for a consumer to release its buffer while still allowing at least one packet of
+ready data to be waiting at all times.
 
 
 \section{Data Delivery}
@@ -450,18 +455,23 @@ cutting out as much duplicated or unnecessary information from the packet header
 stored in "blocks" in the packet) as possible. These changes are listed below.
 
 \start{itemize}
-    \item Removal of a version field for packet headers, as the team has not supported older versions of the specification in the past
+    \item Removal of a version field for packet headers, as the team has not supported older versions of the
+          specification in the past
     \item Updating the packet length field in the packet header to count the number of blocks instead of number of bytes
-    \item Using a rolling sequence number instead of the total number of packets sent so far as the field was only useful for identifying if packets were lost
-    \item Instead of transmitting absolute times with each measurement, storing an imprecise absolute time in the packet header and small precise offsets from this time for each measurement
-    \item Removing fields for identification of the sender and intended recipient, since there has never been more than one of each
+    \item Using a rolling sequence number instead of the total number of packets sent so far as the field was only
+          useful for identifying if packets were lost
+    \item Instead of transmitting absolute times with each measurement, storing an imprecise absolute time in the packet
+          header and small precise offsets from this time for each measurement
+    \item Removing fields for identification of the sender and intended recipient, since there has never been more than
+          one of each
     \item Removing the ability to have more than 256 types of blocks or variable length blocks
 \end{itemize}
 
-These changes have increased the amount of actual data sent in a single packet by almost four times. There is also consideration in
-using a simple compression algorithm like LZ77, which is similar to a simple copy loop and is a universal coding scheme, allowing \gls{cuinspace}
-to employ one of the many existing open-source implementations without any additional work. \cite{lz77-paper} These open-source implementations typically claim
-compression of around 40\% and very low processing time. \cite{liblzf}
+These changes have increased the amount of actual data sent in a single packet by almost four times. There is also
+consideration in using a simple compression algorithm like LZ77, which is similar to a simple copy loop and is a universal
+coding scheme, allowing \gls{cuinspace} to employ one of the many existing open-source implementations without any
+additional work. \cite{lz77-paper} These open-source implementations typically claim compression of around 40\% and very
+low compression time. \cite{liblzf}
 
 Since \gls{cuinspace}'s rockets achieve altitudes up to around 9 kilometres, it is necessary to choose a radio unit
 that can transmit up to such a long range. Unfortunately, long range transmissions are achieved with a trade-off in
