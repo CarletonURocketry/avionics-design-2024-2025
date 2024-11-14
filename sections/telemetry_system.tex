@@ -1,5 +1,8 @@
 \part{Telemetry System Design}
 
+The telemetry system being designed for the 2025 launches is designed to be flown in both competition rockets: the
+30,000ft \gls{cots} solid motor at \gls{sac} and the hybrid motor rocket at \gls{lc}.
+
 This year's telemetry system aims to address the shortcomings in last year's design. The main flaws that are being
 addressed are:
 
@@ -57,12 +60,41 @@ The \gls{mcu} selected for the system is an STM32H743 series from \gls{stm}, thi
 \end{table}
 
 
+\subsection{Microcontroller Unit}
+
+The microcontroller unit selected for the telemetry system flight computer is an STM32H743VI. Key specifications are as
+follows:
+
+\begin{itemize}
+    \item Single ARM Cortex M7 up to 480MHz \cite[1]{stm32h743vi}
+    \item 32KB split L1 cache \cite[1]{stm32h743vi}
+    \item 2MB flash memory \cite[1]{stm32h743vi}
+    \item 1MB SRAM \cite[1]{stm32h743vi}
+    \item DFU programming \cite[Sec. 3.4]{stm32h743vi}
+    \item Multiple power domains \cite[1]{stm32h743vi}
+    \item 2.43uA in standby mode \cite[1]{stm32h743vi}
+    \item 275uA/MHz at 3.3V in run mode \cite[1]{stm32h743vi}
+    \item Double precision \gls{fpu} \cite[1]{stm32h743vi}
+\end{itemize}
+
+\Gls{cuinspace} will be under-clocking the \gls{mcu} at 250MHz to further reduce power consumption, as 250MHz is sufficient for our
+application.
+
+\Gls{cuinspace} will be making use of a few of the peripheral interfaces of the \gls{mcu}:
+
+\begin{itemize}
+    \item 3 UART interfaces
+    \item 2 I2C interfaces
+    \item 1 SDMMC/SDIO interface
+    \item 1 USB interface
+\end{itemize}
+
+The STM32H743 was selected for its power efficiency, large number of peripherals and NuttX support. It's single-core
+architecture makes it simple to program, as many of the other \glspl{mcu} in the STM32H7 series have a dual asymmetric
+core architecture. Its DFU bootloader will be leveraged to program the chip over USB, which is a more common interface
+available to \gls{cuinspace} members than ST-Link/JTAG programmers.
+
 \subsection{Power System}
-The power system primarily consists of an XC6220A331 3.3V linear voltage regulator to step down the voltage from the 1S Li-Ion batteries. There is also a TPS2116 power mux \gls{ic} to allow an automatic switching between the batteries and an alternate power source of 5V from the onboard \gls{usb} connector, this connector can also be used with an extension cable to a USB port on the rocket to allow for charging of the batteries while the rocket is fully assembled. There is a connector to an external screw switch on the outside of the rocket to allow for manual arming and disarming of the system. Although this external switch connector only switches the power from the battery, there is a second onboard switch which should be turned to off when in the rocket to avoid powering the flight computer. This architecture is also shown in \Cref{fig:power-system}. Note that the main arming switch is vibration resistant, while the USB switch was not chosen with vibration resistance in mind. This was done to simplify the selection of the \gls{usb} switch. It isn't a problem that this switch could experience some discontinuities during high vibration as the \gls{usb} switch is only used for selecting whether to power the system via USB which will only be done on the ground.
-
-The power system also incorporates an external connection from outside the rocket to provide power to charge the main batteries through a dedicated Li-Ion battery charger \gls{ic}. This external connection is composed of an \gls{cots} \gls{usb} cable with a magnetic quick disconnect end. The end of this cable plugs into the \gls{usb} port on the \gls{mcu} board to provide power to the battery chargers.
-
-The choice of a linear regulator was primarily made to avoid the noise that a switching regulator would likely introduce into the system. A linear regulator also provides a simpler implementation. Although linear regulators are less efficient than switching regulators the regulator used for this design has an efficiency of ~90\% when in the load range our systems are expected to spend most of their time in. 
 
 \begin{figure}
     \centering
@@ -71,10 +103,272 @@ The choice of a linear regulator was primarily made to avoid the noise that a sw
     \label{fig:power-system}
 \end{figure}
 
+The selected nominal supply voltage for all components in the telemetry system is 3.3V. This voltage is used for both
+the \gls{mcu} board and the radio transmitter board, which will be supplied from the \gls{mcu} board.
+
+The current draw budgeting for all of the components in the telemetry system can be seen in Table \ref{tbl:draw}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{| p{0.8in} | p{0.5in} | p{0.5in} | p{0.5in} | p{0.5in} | p{0.5in} | p{0.5in} |}
+        \hline
+        Component   & Active draw (mA) & Standby draw (mA) & Active (\%) & Standby (\%) & Average (mA) & Max (mA) \\
+        \hline
+        RN2483      & 40.0             & 3.0               & 100         & 0            & 40.0         & 100.0    \\
+        \hline
+        MS5607      & 1.25             & 0.0002            & 10          & 90           & 0.125        & 1.25     \\
+        \hline
+        SHT41       & 0.5              & 0.05              & 10          & 90           & 0.095        & 1        \\
+        \hline
+        L86-M33 GPS & 36.0             & 1                 & 100         & 0            & 36.0         & 100.0    \\
+        \hline
+        SD card     & 50.0             & 1.25              & 60          & 40           & 30.5         & 200.0    \\
+        \hline
+        EEPROM      & 3.0              & 0.001             & 2           & 98           & 0.061        & 3.0      \\
+        \hline
+        MCU         & 34.0             & -                 & 100         & 0            & 24.0         & 100.0    \\
+        \hline
+    \end{tabular}
+    \caption{Current draw breakdown for each component in the telemetry system}
+    \label{tbl:draw}
+\end{table}
+
+\subsubsection{Supplies}
+
+Due to restrictions imposed by \gls{sac} competition regulations, the \gls{cuinspace} telemetry system is designed to
+be powered using standard 18650 \glspl{lion} with a \gls{jst} connector. The nominal voltage of these batteries is
+3.7V, which is sufficient to meet the selected nominal supply voltage of 3.3V.
+
+For debugging purposes, power can also be supplied over a USB connection at 5V.
+
+\subsubsection{Power Regulation}
+
+To regulate the voltages from both power supplies, \gls{cuinspace} has selected a \gls{ldo} voltage regulator.
+\gls{ldo} regulators have a lower power efficiency when compared with switching voltage regulators, but they have a
+much lower noise floor. A switching voltage regulator can operate from a few hundred kilohertz to the megahertz
+switching frequency range. Higher frequency noise is easier to filter out for the sensor networks, which are more
+susceptible to low frequency noise, but high frequency noise has an adverse affect on radio signals.
+
+To avoid both issues, a \gls{ldo} regulator sacrifices some efficiency in return for less noise.
+
 \subsection{Sensor Systems}
 
+The sensors on board the flight computer are required to collect information about the rocket's state during flight at
+a high enough resolution to be able to characterize the rocket's flight path after recovering flight logs or when
+receiving telemetry data.
 
-\fxwarning{Add sensor systems design}
+The key pieces of data for a rocket flight are:
+
+\begin{itemize}
+    \item Roll, pitch and yaw
+    \item Acceleration in all 3 axes
+    \item Velocity in all 3 axes
+    \item Altitude
+    \item Position
+\end{itemize}
+
+With this information it is possible to characterize the rocket's flight path and recover the rocket upon landing. This
+information will be logged at a minimum of 10Hz to provide satisfactory resolution of the rocket flight.
+\gls{cuinspace} is designing for a minimum of a 10Hz logging rate, but will aim to maximize logging rate on sensors
+that are capable of updating faster.
+
+\Gls{cuinspace} also wishes to acquire temperature and humidity information at a lower priority to determine the
+temperature levels inside the rocket. Since \gls{sac} typically takes place in the New Mexico desert during summer time,
+it is important to characterize temperatures inside the rocket when evaluating thermals on key components, such as
+voltage regulators. \Gls{cuinspace} aims to avoid the possibility of any overheating components, or components operating
+outside of their nominal temperature range.
+
+In order to acquire the key pieces of data mentioned above, the following sensors will be used:
+
+\begin{itemize}
+    \item Barometric pressure sensor (altitude)
+    \item 3-axis magnetometer (compass heading)
+    \item 3-axis accelerometer (linear acceleration)
+    \item 3-axis gyroscope (angular velocity)
+    \item Temperature and humidity sensor
+    \item GNSS chip (positioning, heading, altitude)
+\end{itemize}
+
+Many of these sensors require calibration and selection of specific operating settings. To accommodate this need, an
+on-board \gls{eeprom} will be used for storing calibration information. This allows multiple boards to be calibrated
+after manufacture so they are ready for flight.
+
+\subsubsection{Barometric Pressure Sensor}
+
+The selected barometric pressure sensor is the MS5607.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=2in]{assets/images/ms5607.jpg}
+    \caption{MS5607 barometric pressure sensor \cite{ms5607-pic}}
+\end{figure}
+
+The M5607 was selected because it provides an \gls{i2c} interface and operates at a 3.3V supply voltage.
+\cite[1]{ms5607-datasheet} It has a resolution of 20 centimetres \cite[1]{ms5607-datasheet} and operates from -40 to 85
+degrees Celsius and 10 to 2000 millibars \cite[1]{ms5607-datasheet}, which is well within the expected temperature and
+pressure ranges.
+
+\subsubsection{Accelerometer \& Gyroscope}
+
+The selected \gls{imu} is the LSM6DSO32, which combines both 3-axis accelerometer and 3-axis gyroscope in one package.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1in]{assets/images/lsm6dso32.jpg}
+    \caption{LSM6DSO32 \gls{imu} \cite{lsm6dso32-pic}}
+\end{figure}
+
+The LSM6DSO32 was selected because it provides and \gls{i2c} interface and operates at our supply voltage of 3.3V.
+\cite{lsm6dso32-datasheet} It also provides a \gls{fsr} of $\pm 32$g \cite[1]{lsm6dso32-datasheet}, which is required
+since the rockets flown by \gls{cuinspace} often experience up to around 25g of acceleration at lift-off. This sensor
+also has a convenient register interface for reading the sensor and interacting with it.
+
+\subsubsection{Magnetometer}
+
+The selected magnetometer is the LIS2MDL.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1in]{assets/images/lis2mdl.jpg}
+    \caption{LIS2MDL magnetometer \cite{lis2dml-pic}}
+    \label{fig:magnetometer}
+\end{figure}
+
+This magnetometer was selected because it has an \gls{i2c} interface and can be supplied at 3.3V.
+\cite{lis2mdl-datasheet} It also has a convenient register interface similar to the LSM6DSO32, which makes it easy for
+\gls{cuinspace} members to user.
+
+\subsubsection{GPS/GNSS}
+
+The selected \gls{gps} and \gls{gnss} receiver module is the Quectel L86-M33.
+
+\begin{figure}[H]
+    \center
+    \includegraphics[width=2in]{assets/images/l86m33.png}
+    \caption{The L86-M33 \gls{gps} module \cite{gps-pic}}
+    \label{fig:gps}
+\end{figure}
+
+This \gls{gps} module was selected because it operates at a nominal supply voltage of 3.3V \cite{gps-datasheet} and has
+a \gls{uart} interface for sending \gls{nmea} protocol messages. \cite{gps-datasheet} It allows for the use of either
+its integrated ceramic antenna or an external antenna \cite{gps-datasheet}, provide a backup option if the external
+antenna design has flaws or if the flight computer is used in an enclosed space where an external \gls{gps} antenna
+cannot be used. The module also supports an update frequency of 10 hertz \cite{gps-datasheet}, which meets
+\gls{cuinspace}'s minimum requirements. The unit is also around 50\% cheaper than Ublox branded alternatives.
+
+\subsubsection{Temperature \& Humidity Sensor}
+
+The selected temperature and humidity sensor is the Sensirion SHT41.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=2in]{assets/images/sht41.jpg}
+    \caption{The SHT41 temperature and humidity sensor \cite{sht41-pic}}
+\end{figure}
+
+This sensor was selected because it has an operating range of -40 to 125 degrees Celsius \cite[1]{sht4x-datasheet},
+which covers the operating range of our rocket in both the New Mexico desert and Ontario boreal forests. It can be
+supplied at 3.3V \cite[1]{sht4x-datasheet} and is very low power with an average current draw of 0.4 micro-amps.
+\cite[1]{sht4x-datasheet} It has an incredibly simple \gls{i2c} control interface which makes it easy to operate.
+\cite[Sec. 4.5]{sht4x-datasheet}
+
+\section{Radio Frequency Design}
+
+The radio transmitter portion of the telemetry system will be based on a student-designed \gls{pcb} designed around the
+RN2483 radio transceiver chip. More information about the chip's specifications can be found in Appendix
+\ref{apx:rn483}. You can see the chip featured on the Pictail board in Figure \ref{fig:pictail}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=2.5in]{assets/images/pictail.jpg}
+    \caption{The RN2483 radio transceiver chip on the commercial Pictail board \cite{pictail-img}}
+    \label{fig:pictail}
+\end{figure}
+
+The RN2483 chip was selected because of its low power consumption of 38.9 milliamps when transmitting \cite[Table
+    2-3]{rn2483-datasheet} and long-range capabilities, transmitting up to a distance of 15 kilometres in suburban
+environments \cite[1]{rn2483-datasheet}. It also has a \gls{cots} twin, the RN2483 Pictail board. This is useful to
+compare our \gls{srad} designs against during range testing.
+
+\subsection{Radio Parameters}
+
+\subsubsection{Frequency}
+
+The RN2483 transceiver will be used to operate on the 433MHz band in our systems. This frequency band was selected
+because it requires a lower transmit power for the same range \cite[Table 2-5]{rn2483-datasheet} as the 868MHz band.
+This band is also licensed as a \gls{ham-radio} band. \Gls{cuinspace} has amateur radio certified members who can
+operate our radio systems and provide their call-sign for use in the transmissions. Our exact frequency is 433.5MHz.
+
+\subsubsection{Modulation}
+
+The RN2483 is capable of both FSK and LoRa modulation, but InSpace will be using LoRa modulation since it provides
+better long-range performance. The modulation technique makes signals less susceptible to noise.
+
+\subsubsection{Spread Factor}
+
+The spread factor determines how much the signal is spread across the frequency band used by the radio. It is possible
+to set spread factors from 7 to 12. \cite[Sec. 2.5.5.14]{rn2483-commands} A lower spread factor increases data rate.
+
+\Gls{cuinspace} uses the lowest spread factor of 7 to maximize the data rate.
+
+\subsubsection{Cyclic Redundancy Check}
+
+\Gls{cuinspace} enables the cyclic redundancy check configuration of the RN2483 to provide error detection on
+transmitted packets. This allows packets corrupted in-flight to be ignored by the receiver, simplifying software by
+removing the need to perform our own error detection.
+
+\subsection{PCB Design Considerations}
+
+The radio board is designed to be a four layer \gls{pcb}. This allows top and bottom copper signal routing, with ground
+and power planes in the center.
+
+The ground plane will be layer immediately under the top copper, as it provides a reference plane which is beneficial
+for radio frequency traces. The trace will be a microstrip line, which is a copper trace running above a ground plane,
+separated by an impedance controlled dielectric. A visual of microstrip can be seen in Figure \ref{fig:microstrip}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=3in]{assets/images/microstrip.png}
+    \caption{Microstrip line \cite{microstrip}}
+    \label{fig:microstrip}
+\end{figure}
+
+Our radio frequency traces are impedance controlled to 50 ohms, which is a standard impedance for radio equipment,
+including the \gls{sma} connectors and antennas used by \gls{cuinspace}.
+
+All radio frequency traces on the board are also kept below the critical length for the 433MHz frequency, which
+prevents them from acting as an antenna themselves. \Gls{pcb} trace lengths should not exceed 1/12th of the wavelength
+in the dielectric. \cite{critical-length}
+
+Our manufacturer's dielectric constant for the prepreg layer we use on our impedance controlled boards is 4.4.
+\cite{jlc-pcb-impedance}. Equation \ref{eq:wavelength} is used to calculate the wavelength of the radio signal in the
+PCB trace.
+
+\begin{equation}
+    \lambda = \frac{c}{f\sqrt{\epsilon_R}}
+\end{equation} \label{eq:wavelength}
+
+Then, given this wavelength, the critical length is calculated using Equation \ref{eq:critlen}.
+
+\begin{equation}
+    L = \frac{1}{12} \times \lambda
+\end{equation} \label{eq:critlen}
+
+The critical length of the trace for our operating frequency of 433.5MHz is approximately 2.75 centimetres. All of our
+\gls{rf} traces carrying 433.5MHz signals will therefore be designed to have a total length less than 2.75 centimetres.
+
+\begin{gather*}
+    \lambda = \frac{300 \times 10^6}{(433.5 \times 10^6)\sqrt{4.4}} \\
+    \lambda = 0.32991785095003 \\
+    \\
+    L = \frac{1}{12} \times (0.32991785095003) \\
+    L = 0.027493154245836 \\
+    L \approx 0.0275 \\
+\end{gather*}
+
+In addition, our \gls{rf} traces will be designed to have no sharp bends. The RN2483 sample application show traces
+that have two bends with a radius of 2.0 millimetres. \cite[Sec. 5.1]{rn2483-datasheet} If a bend is necessary, the
+design will adhere to this bend radius.
 
 \section{Real-Time Operating System}
 
@@ -126,15 +420,21 @@ little processor time and only have to trigger short bursts of \gls{io} operatio
 \textbf{Task priorities from highest to lowest:}
 
 \begin{enumerate}
-    \item SD card logging
     \item Radio transmission
+    \item SD card logging
     \item Sensor data collection
-    \item Packet encoding
 \end{enumerate}
 
-Packet encoding is the most \gls{cpu} intensive task but is also lowest priority since the \gls{io} operations are
-critical and take very little \gls{cpu} time, so they can afford to be ushered in to quickly trigger an \gls{io}
-operation and relinquish the \gls{cpu}.
+Radio transmission is the slowest of the tasks due to radio bandwidth. It will spend most of its time waiting for
+\gls{io} operations to complete, so it should have the highest priority. This allows it to perform any \gls{cpu} based
+logic quickly and return to blocking, ensuring that the radio operates at its maximum speed.
+
+SD card logging is also \gls{io} intensive, but much quicker in comparison to the radio. It can be prioritized lower
+than the radio task for this reason.
+
+Both SD card logging and radio transmission require data to be available to perform their tasks, and will block
+otherwise. The sensor data collection thread can therefore run at lowest priority, because whenever the supply of data
+is depleted by the radio and logging tasks, it will be given the CPU to produce more data.
 
 The telemetry system will immediately perform boot operations to load all the device drivers before launching into the
 application code at power-on.
@@ -250,10 +550,16 @@ The on-board data logging is fast enough to capture the full resolution of measu
 bandwidth, it is only used to broadcast the most recently measured packet at the time when it becomes ready for another
 transmission.
 
-\section{Radio Frequency Design}
-
-% TODO: in addition to board design, explain chosen LoRa parameters
-
 \section{Enclosure Design}
 
-%This might be in aerostructures PDR, not certain.
+The avionics enclosure is designed to be mounted on top of a bulkhead. In CR25 (the \gls{cots} solid motor rocket), the
+enclosure will be mounted inside a fibreglass nosecone for radio transparency. In CR25-H (the hybrid motor), the
+enclosure will be mounted inside a fibreglass section of the body tube.
+
+The enclosure shape is still being finalized as aerostructures finishes the bulkhead design.
+
+The enclosure will be stress and shock load tested in simulation to verify structural integrity. It will also be
+subjected to vibration testing to ensure that mounting hardware like nuts and screws stay secure.
+
+The enclosure will be made of aluminum to stay lightweight. Most of the weight in the avionics systems mass budget
+should be allocated for the batteries.
