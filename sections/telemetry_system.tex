@@ -31,7 +31,7 @@ designs needed to be reworked. These \glspl{pcb} included a \gls{mcu} board, a s
 and a \gls{cots} systems board, and led to the visual appearance of a "stack" of boards. This year, because previous
 designs were so simple for the sensor board, \gls{cuinspace} decided to combine the sensor board with the \gls{mcu} board
 into a single design to save space in the rocket and money on board manufacturing costs. The radio board was kept 
-seperate because of how often it has been redesigned in the past and so it could be replaced with a \gls{cots} radio
+separate because of how often it has been redesigned in the past and so it could be replaced with a \gls{cots} radio
 board if the design \gls{cuinspace} produced did not have the required range. In future years the radio board could also
 be incorporated into the \gls{mcu} and sensor board.
 
@@ -130,7 +130,7 @@ The current draw budgeting for all the components in the telemetry system can be
         \hline
         SHT41       & 0.5  & 0.05   & 10  & 90 & 0.095 & 1     \\
         \hline
-        L86-M33 GPS & 36.0 & 1      & 100 & 0  & 36.0  & 100.0 \\
+        Teseo-LIV3R GPS & 36.0 & 1      & 100 & 0  & 36.0  & 100.0 \\
         \hline
         SD card     & 50.0 & 1.25   & 60  & 40 & 30.5  & 200.0 \\
         \hline
@@ -243,11 +243,11 @@ This magnetometer was selected because it has an \gls{i2c} interface and can be 
 
 \subsubsection{GPS/GNSS}
 
-The selected \gls{gps} and \gls{gnss} receiver module is the Quectel L86-M33.
+The selected \gls{gps} and \gls{gnss} receiver module is the ST Microelectronics Teseo-LIV3R.
 
 \begin{figure}[H]
     \center
-    \includegraphics[width=2in]{assets/images/l86m33.png}
+    \includegraphics[width=2in]{assets/images/teseogps.png}
     \caption{The L86-M33 \gls{gps} module \cite{gps-pic}}
     \label{fig:gps}
 \end{figure}
@@ -327,7 +327,7 @@ removing the need to perform our own error detection.
 \subsection{PCB Design Considerations}
 
 The radio board is designed to be a four layer \gls{pcb}. This allows top and bottom copper signal routing, with ground
-and power planes in the center.
+and power planes in the centre.
 
 The ground plane will be layer immediately under the top copper, as it provides a reference plane which is beneficial
 for radio frequency traces. The trace will be a microstrip line, which is a copper trace running above a ground plane,

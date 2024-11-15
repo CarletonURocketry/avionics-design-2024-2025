@@ -27,3 +27,6 @@
 # VS Code Workspace Files
 *.code-workspace
 .vscode/
+
+# Do not ignore files in the assets directory
+!assets/*/*
