@@ -543,9 +543,12 @@ lift-off, without losing any critical data about the start of the launch.
 Lift-off is detected using the accelerometer data in conjunction with the barometric pressure sensor. The accelerometer
 data can detect the high g-force experienced at launch (previous launches have seen up to 24g) and the barometric
 pressure sensor can detect a climbing altitude. In the first few seconds of lift-off, the system will be able to detect
-the high g-force and increasing acceleration, at which point it will move to the \textit{AIRBORNE} state. This state is
-recorded by setting the "airborne bit" to 1 in the on-board \gls{eeprom}. Doing so means that if the system experience
-power-failure in the air, when it reboots it will successfully boot into the \textit{AIRBORNE} state again.
+the high g-force and increasing acceleration, at which point it will move to the \textit{AIRBORNE} state. The system can
+also enter the \textit{AIRBORNE} state if the altitude since power on (recorded by the barometric pressure sensor) is above
+100 meters, as a replacement for the g-force requirement. This is to ensure that if the rocket expriences power failure
+upon ignition, missing the high g-force at launch will not cause the loss of any futher data when the system reboots.
+This state is recorded by setting the "airborne bit" to 1 in the on-board \gls{eeprom}. Doing so means that if the system
+experience power-failure in the air, when it reboots it will successfully boot into the \textit{AIRBORNE} state again.
 
 In the \textit{AIRBORNE} state, the flight computer will continuously log to the \textit{littlefs} partition on the SD
 card. This will capture flight data at a much higher frequency than is possible to transmit over radio.
