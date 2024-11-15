@@ -443,6 +443,16 @@ Both SD card logging and radio transmission require data to be available to perf
 otherwise. The sensor data collection thread can therefore run at lowest priority, because whenever the supply of data
 is depleted by the radio and logging tasks, it will be given the CPU to produce more data.
 
+The application that will decide how these tasks interact with eachother throughout the process of collection, data
+processing, storage, and eventually logging or transmission can be seen in Figure \ref{fig:telemetry-application}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{assets/diagrams/NuttX_Telemetry_Application.png}
+    \caption{Application Overview}
+    \label{fig:telemetry-application}
+\end{figure}
+
 The telemetry system will immediately perform boot operations to load all the device drivers before launching into the
 application code at power-on.
 
@@ -450,7 +460,7 @@ application code at power-on.
 
 Previously, data was passed between the sensor data collection thread and the radio transmission and SD card logging
 processes using \gls{posix} message queues. This reduced coupling between processes but performed unnecessary copies on
-collected data.  Conveniently, because of NuttX's flat architecture, threads have similar characteristics as kernel-level
+collected data. Conveniently, because of NuttX's flat architecture, threads have similar characteristics as kernel-level
 threads and data can easily be shared between them. \cite{nuttx-pthread} This opens up the option of using a single shared
 data structure to recieve data and hold it while it is being logged or transmitted.
 
@@ -470,7 +480,14 @@ queue, at the same time removing the oldest buffer that was used by the maximum 
 Consumers will retrieve the newest (first) buffer on the queue they have not used yet, then use the buffer directly to
 send data to the radio or write to the file system. This design uses \gls{posix} read/write locks for each buffer and
 the queue itself and only blocks threads for extremely short amounts of time and when it is conceptually important to do
-so anyways.
+so anyways. A concept of how this buffer would look can be seen in Figure \ref{fig:data-buffer}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{assets/diagrams/Packet_Queue.png}
+    \caption{Packet Queue Concept}
+    \label{fig:data-buffer}
+\end{figure}
 
 Additionally, as long as the total number of buffers used is greater than the number of producers and consumers, there
 will always be space for writing and another packet that is ready to be written to. This means the producer will never
