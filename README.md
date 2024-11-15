@@ -19,8 +19,8 @@ If you'd like to download the pre-compiled PDF for the design documents, you can
 ## Building
 
 To generate the specification PDF, run `make all` within the project directory. You must have LaTeX tooling installed
-(specifically `pdflatex`). You'll probably need the texlive-latex-reccomended, texlive-extra-utils, texlive-latex-extra,
-texlive-bibtex-extra, and texlive-science packages.
+(specifically `pdflatex`). You'll probably need the `texlive-latex-reccomended`, `texlive-extra-utils`, `texlive-latex-extra`,
+`texlive-bibtex-extra`, and `texlive-science` packages if you're using `apt`.
 
 On Windows, this will work if you run `pdflatex design.tex`, then `makeglossaries design` and finally `pdflatex
 design.tex`.
