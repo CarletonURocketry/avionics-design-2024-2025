@@ -412,6 +412,21 @@ NuttX also supplies drivers of its own for very standard communication protocols
 \gls{spi}, etc. This facilitates the writing of device drivers for simple digital sensors such as an \gls{imu} or
 temperature sensor.
 
+\subsection{Uorb \cite{uorb-driver}}
+
+Uorb (micro object request broker) is a pub-sub message broker that NuttX offers as a driver interface, it's advantages over the traditional POSIX \texttt{open()} and \texttt{close()} interface mentioned above
+include callback based notifications instead of polling, internal circular buffers for multi client reads and an additional abstaction layer that separates sensors by type.
+
+To implement the uorb interface a driver must register as a node of topic type (temperature, mass, gps), this creates a character device that when subscribed to triggers a user specified callback with the sensor values.
+We have been transitioning all of our drivers to uorb as it provides us with increased data collection capabilities at a smaller footprint.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{assets/diagrams/uorb.png}
+    \caption{Uorb wrapper model}
+    \label{fig:uorb}
+\end{figure}
+
 \subsection{Scheduling}
 
 Task scheduling within NuttX can be easily performed using \gls{posix} \glspl{api} again. It is possible to create
